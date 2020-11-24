@@ -55,6 +55,8 @@ exclude = [
 
 [tool.poetry.dependencies]
 python = "^3.9"
+typer = {extras = ["all"], version = "^0.3.2"}
+loguru = "^0.5.3"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
