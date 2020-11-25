@@ -38,16 +38,26 @@ from __future__ import annotations
 
 import sys
 from functools import lru_cache
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import loguru
 
-from .constants import APP_VERSION
+from .constants import APP_NAME, APP_VERSION, LOG_DIRPATH
 
-STDOUT_HANDLER_DEFAULTS = dict(
+DEFAULT_LOG_FORMAT = "<dim>{time}</dim> <level>{level:8s}</level> {message}"
+DEFAULT_RECORD_HANDLER = dict(
+    sink=LOG_DIRPATH.joinpath(f"{APP_NAME!s}.log").as_posix(),
+    level="DEBUG",
+    format=DEFAULT_LOG_FORMAT,
+    rotation="00:00",
+    retention="10 days",
+    compression="zip",
+    serialize=True,
+)
+DEFAULT_STDOUT_HANDLER = dict(
     sink=sys.stdout,
     level="CRITICAL",
-    format="<dim>{time}</dim> <level>{level:8s}</level> {message}",
+    format=DEFAULT_LOG_FORMAT,
 )
 
 
@@ -55,6 +65,7 @@ def configure_logger(
     logger: loguru.Logger,
     level: str = "CRITICAL",
     debug: bool = False,
+    record: bool = False,
 ) -> loguru.Logger:
     """Configure the global logger.
 
@@ -67,18 +78,26 @@ def configure_logger(
         debug (bool, optional):
             If True, configures the logger with the debug configuration.
             Defaults to False.
+        record (bool, optional):
+            If True, logs will be recorded and written out to the log directory.
+            Defaults to False.
 
     Returns:
         :class:`loguru.Logger`:
             The newly configured global logger
     """
 
-    stdout_handler: Dict[str, Any] = {
-        **STDOUT_HANDLER_DEFAULTS,
-        **dict(level=level, diagnose=debug, backtrace=debug),
-    }
+    handlers: List[Dict[str, Any]] = [
+        {
+            **DEFAULT_STDOUT_HANDLER,
+            **dict(level=level, diagnose=debug, backtrace=debug),
+        }
+    ]
 
-    logger.configure(handlers=[stdout_handler])
+    if record:
+        handlers.append(DEFAULT_RECORD_HANDLER)
+
+    logger.configure(handlers=handlers)
     return logger.bind(version=APP_VERSION)
 
 

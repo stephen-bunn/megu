@@ -12,3 +12,5 @@ APP_NAME = "megu"
 APP_VERSION = "0.1.0"
 
 CONFIG_DIRPATH = Path(typer.get_app_dir(app_name=APP_NAME)).absolute()
+LOG_DIRPATH = CONFIG_DIRPATH.joinpath("logs")
+PLUGIN_DIRPATH = CONFIG_DIRPATH.joinpath("plugins")
