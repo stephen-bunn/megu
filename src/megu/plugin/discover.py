@@ -67,7 +67,7 @@ def load_plugin_module(module_name: str) -> ModuleType:
 
     try:
         module = importlib.import_module(module_name)
-        log.success(f"Loaded plugin module {module_name!r}")
+        log.debug(f"Loaded plugin module {module_name!r}")
         return module
     except Exception as exc:
         plugin_exception = PluginFailure(

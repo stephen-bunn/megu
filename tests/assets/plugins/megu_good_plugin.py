@@ -12,8 +12,22 @@ class MiscellaneousClass(object):
 
 
 class MeguTestPlugin(BasePlugin):
-    ...
+    name = "Test Plugin"
+    domains = {"google.com"}
+
+    def can_handle(self, url):
+        return True
+
+    def extract_content(self, url):
+        ...
 
 
 class MeguSecondTestPlugin(BasePlugin):
-    ...
+    name = "Second Test Plugin"
+    domains = {"google.com"}
+
+    def can_handle(self, url):
+        return True
+
+    def extract_content(self, url):
+        ...
