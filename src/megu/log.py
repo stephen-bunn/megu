@@ -44,26 +44,26 @@ import loguru
 
 from .constants import APP_VERSION
 
-DEFAULT_HANDLER = dict(
+STDOUT_HANDLER_DEFAULTS = dict(
     sink=sys.stdout,
     level="CRITICAL",
-    format="<level>{level:8s}</level> {message}",
-)
-DEBUG_HANDLER = dict(
-    sink=sys.stdout,
-    level="DEBUG",
     format="<dim>{time}</dim> <level>{level:8s}</level> {message}",
-    backtrace=True,
-    diagnose=True,
 )
 
 
-def configure_logger(logger: loguru.Logger, debug: bool = False) -> loguru.Logger:
+def configure_logger(
+    logger: loguru.Logger,
+    level: str = "CRITICAL",
+    debug: bool = False,
+) -> loguru.Logger:
     """Configure the global logger.
 
     Args:
         logger (:class:`loguru.Logger`):
             The global logger instance to configure.
+        level (str, optional):
+            The string level to filter logging messages through.
+            Defaults to "CRITICAL"
         debug (bool, optional):
             If True, configures the logger with the debug configuration.
             Defaults to False.
@@ -73,10 +73,12 @@ def configure_logger(logger: loguru.Logger, debug: bool = False) -> loguru.Logge
             The newly configured global logger
     """
 
-    handler: Dict[str, Any] = (
-        DEBUG_HANDLER if debug else DEFAULT_HANDLER  # type: ignore
-    )
-    logger.configure(handlers=[handler])
+    stdout_handler: Dict[str, Any] = {
+        **STDOUT_HANDLER_DEFAULTS,
+        **dict(level=level, diagnose=debug, backtrace=debug),
+    }
+
+    logger.configure(handlers=[stdout_handler])
     return logger.bind(version=APP_VERSION)
 
 

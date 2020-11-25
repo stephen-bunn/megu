@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 import loguru
 from hypothesis import given
@@ -29,9 +29,7 @@ def test_configure_logger(debug: bool):
         logger = log.configure_logger(loguru.logger, debug=debug)
         assert isinstance(logger, loguru.logger.__class__)
 
-        mocked_configure.assert_called_once_with(
-            handlers=[log.DEBUG_HANDLER if debug else log.DEFAULT_HANDLER]
-        )
+        mocked_configure.assert_called_once_with(handlers=[ANY])
         mocked_bind.assert_called_once_with(version=constants.APP_VERSION)
 
 

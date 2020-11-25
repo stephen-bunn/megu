@@ -108,6 +108,8 @@ def discover_plugins(
         sys.path.insert(0, plugin_dir)
 
     plugin_prefix = f"{APP_NAME!s}_"
+
+    log.info(f"Discovering plugins in {plugin_dir!r}")
     for _, plugin_name, _ in pkgutil.iter_modules([plugin_dir]):
         # filter out modules that are not prefixed with the application name
         if not plugin_name.startswith(plugin_prefix):
