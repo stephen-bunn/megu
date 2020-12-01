@@ -41,6 +41,7 @@ def main(
             The level of verbosity to use for logging.
             Defaults to 0.
     """
+
     logger = get_logger()
     configure_logger(logger, level=LOG_VERBOSITY_LEVELS[verbosity])
 

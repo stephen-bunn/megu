@@ -2,8 +2,7 @@
 # Copyright (c) 2020 Stephen Bunn <stephen@bunn.io>
 # ISC License <https://choosealicense.com/licenses/isc>
 
-"""
-"""
+"""Defines the command line interface namespace."""
 
 from .app import app
 
