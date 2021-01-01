@@ -60,6 +60,10 @@ loguru = "^0.5.3"
 pydantic = "^1.7.2"
 requests = "^2.25.0"
 furl = "^2.1.0"
+orderedmultidict = "^1.0.1"
+xxhash = "^2.0.0"
+cached-property = "^1.5.2"
+tqdm = "^4.54.1"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"

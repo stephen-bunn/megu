@@ -5,15 +5,15 @@
 """Contains logic for handling HTTP downloads."""
 
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from functools import cached_property
 from pathlib import Path
-from typing import Any, Callable, Dict, Generator, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from requests.sessions import PreparedRequest, Session
+from cached_property import cached_property
+from requests import Session
 
 from ..constants import STAGING_DIRPATH
 from ..log import instance as log
-from ..types import Content
+from ..types import Artifact, Content
 from .base import BaseDownloader
 
 DEFAULT_CHUNK_SIZE = 2 ** 12
@@ -52,13 +52,14 @@ class HttpDownloader(BaseDownloader):
         # FIXME: really stupid implementation for WIP testing
         return True
 
-    def download_request(
+    def download_artifact(
         self,
-        request: PreparedRequest,
+        artifact: Artifact,
+        artifact_index: int,
         to_path: Path,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
-        progress_hook: Optional[Callable[[PreparedRequest, int, int], Any]] = None,
-    ) -> Path:
+        progress_hook: Optional[Callable[[int], Any]] = None,
+    ) -> Tuple[int, Artifact, Path]:
         """Download some artifact to a specific filepath.
 
         Args:
@@ -78,37 +79,46 @@ class HttpDownloader(BaseDownloader):
                 The path the artifact was downloaded to.
         """
 
-        log.debug(f"Making request {request!r}")
-        response = self.session.send(request, stream=True)
-        log.success(f"Request {request!r} resolved to {response!r}")
-
-        total_size = int(response.headers["Content-Length"])
-        self.allocate_storage(to_path, total_size)
-        if progress_hook:
-            progress_hook(request, 0, total_size)
-
-        current_size = 0
-
-        with to_path.open("wb") as file_handle:
-            log.info(
-                f"Downloading content of length {total_size!s} from {response!r} in "
-                f"chunks of {chunk_size!s} bytes"
+        with log.contextualize(artifact=artifact):
+            log.debug(f"Making request for artifact {artifact.fingerprint!r}")
+            response = self.session.send(artifact.to_request(), stream=True)
+            log.success(
+                f"Artifact {artifact.fingerprint!r} resolved to status "
+                f"{response.status_code!r}"
             )
-            for chunk in response.iter_content(chunk_size=chunk_size):
-                file_handle.write(chunk)
-                current_size += len(chunk)
 
-                if progress_hook:
-                    progress_hook(request, current_size, total_size)
+            total_size = int(response.headers["Content-Length"])
+            self.allocate_storage(to_path, total_size)
 
-        return to_path
+            with to_path.open("wb") as file_handle:
+                log.info(
+                    f"Downloading content of length {total_size!s} from {response!r} "
+                    f"in chunks of {chunk_size!s} bytes"
+                )
+
+                for chunk in response.iter_content(chunk_size=chunk_size):
+                    file_handle.write(chunk)
+
+                    if progress_hook:
+                        progress_hook(len(chunk))
+
+        return (artifact_index, artifact, to_path)
+
+    def _get_content_size(self, content: Content) -> int:
+        size = 0
+
+        for artifact in content.artifacts:
+            response = self.session.head(artifact.url)
+            size += int(response.headers.get("Content-Length", 0))
+
+        return size
 
     def download_content(
         self,
         content: Content,
         max_connections: int = DEFAULT_MAX_CONNECTIONS,
-        progress_hook: Optional[Callable[[int, int], Any]] = None,
-    ) -> Generator[Tuple[PreparedRequest, Path], None, None]:
+        progress_hook: Optional[Callable[[int], Any]] = None,
+    ) -> List[Tuple[Artifact, Path]]:
         """Download the artifacts of some content to temporary storage.
 
         Args:
@@ -126,13 +136,27 @@ class HttpDownloader(BaseDownloader):
                 A tuple of the artifact and the path the artifact was downloaded to.
         """
 
-        request_futures: Dict[Future, PreparedRequest] = {}
+        results: List[Tuple[int, Artifact, Path]] = []
+        request_futures: Dict[Future, Artifact] = {}
         with ThreadPoolExecutor(max_workers=max_connections) as executor:
-            for request_index, request in enumerate(content.requests):
-                to_path = STAGING_DIRPATH.joinpath(f"{content.id!s}.{request_index!s}")
+            for artifact_index, artifact in enumerate(content.artifacts):
+                to_path = STAGING_DIRPATH.joinpath(
+                    f"{content.id!s}.{artifact.fingerprint!s}"
+                )
                 request_futures[
-                    executor.submit(self.download_request, *(request, to_path))
-                ] = request
+                    executor.submit(
+                        self.download_artifact,
+                        *(artifact, artifact_index, to_path),
+                        progress_hook=progress_hook,
+                    )
+                ] = artifact
 
             for future in as_completed(request_futures):
-                yield (request_futures[future], future.result())
+                results.append(future.result())
+
+        return [
+            (artifact, artifact_path)
+            for _, artifact, artifact_path in sorted(
+                results, key=lambda result: result[0]
+            )
+        ]

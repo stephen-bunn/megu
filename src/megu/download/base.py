@@ -6,12 +6,10 @@
 
 import abc
 from pathlib import Path
-from typing import Any, Callable, Generator, Optional, Tuple
-
-from requests import PreparedRequest
+from typing import Any, Callable, List, Optional, Tuple
 
 from ..log import instance as log
-from ..types import Content
+from ..types import Artifact, Content
 
 DEFAULT_MAX_CONNECTIONS = 8
 
@@ -41,8 +39,8 @@ class BaseDownloader(abc.ABC):
         self,
         content: Content,
         max_connections: int = DEFAULT_MAX_CONNECTIONS,
-        progress_hook: Optional[Callable[[int, int], Any]] = None,
-    ) -> Generator[Tuple[PreparedRequest, Path], None, None]:
+        progress_hook: Optional[Callable[[Content, int, int], Any]] = None,
+    ) -> List[Tuple[Artifact, Path]]:
         """Download the artifacts of some content to temporary storage.
 
         Args:

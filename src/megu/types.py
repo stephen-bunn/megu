@@ -4,31 +4,28 @@
 
 """Contains definitions of types used throughout the project."""
 
+import mimetypes
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from io import BytesIO
+from typing import Any, Callable, Dict, List, Optional
 
+from cached_property import cached_property
 from furl.furl import furl
 from pydantic import AnyHttpUrl, BaseModel, Field
 from requests import PreparedRequest
+from requests.sessions import Request
+
+from .hasher import HashType, hash_io
+from .log import instance as log
 
 Url = furl
-
-
-class ChecksumType(Enum):
-    """Categorizes the different types of supported checksums."""
-
-    MD5 = "md5"
-    SHA1 = "sha1"
-    SHA256 = "sha256"
-    SHA512 = "sha512"
-    CRC32 = "crc32"
 
 
 class Checksum(BaseModel):
     """Describes a checksum that should be used for content validation."""
 
-    type: ChecksumType = Field(
+    type: HashType = Field(
         title="Type",
         description="The type of the checksum.",
     )
@@ -41,6 +38,11 @@ class Checksum(BaseModel):
 class Meta(BaseModel):
     """Describes some additional metadata about the extracted content."""
 
+    id: Optional[str] = Field(
+        default=None,
+        title="ID",
+        description="The site's ID of the extracted content.",
+    )
     title: Optional[str] = Field(
         default=None,
         title="Title",
@@ -78,6 +80,88 @@ class Meta(BaseModel):
     )
 
 
+class HTTPMethod(Enum):
+
+    GET = "GET"
+    HEAD = "HEAD"
+    POST = "POST"
+    PUT = "PUT"
+    DELETE = "DELETE"
+    CONNECT = "CONNECT"
+    OPTIONS = "OPTIONS"
+    TRACE = "TRACE"
+    PATCH = "PATCH"
+
+
+class Artifact(BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+        keep_untouched = (cached_property,)
+
+    method: HTTPMethod = Field(
+        title="Method",
+        description="HTTP Method to fetch the artifact URL.",
+    )
+    url: AnyHttpUrl = Field(
+        title="URL",
+        description="The artifact URL to fetch.",
+    )
+    headers: dict = Field(
+        default_factory=dict,
+        title="Headers",
+        description="The headers to fetch the artifact URL.",
+    )
+    data: Optional[bytes] = Field(
+        default=None,
+        title="Data",
+        description="The request data to fetch the artifact URL.",
+    )
+    auth: Optional[Callable[[Request], Request]] = Field(
+        default=None,
+        title="Authentication Handler",
+        description="Callable to handle authenticating a request.",
+    )
+
+    def _get_signature(self) -> bytes:
+        signature = bytes(
+            "|".join((str(self.method.value), str(self.url), str(self.headers))),
+            "utf-8",
+        )
+
+        if self.data is not None:
+            signature += b"|" + self.data
+
+        return signature
+
+    @cached_property
+    def fingerprint(self) -> str:
+        fingerprint = hash_io(
+            BytesIO(self._get_signature()),
+            {HashType.XXHASH},
+        )[HashType.XXHASH]
+        log.debug(f"Computed fingerprint {fingerprint!r} for artifact {self!r}")
+
+        return fingerprint
+
+    @classmethod
+    def from_request(cls, request: PreparedRequest) -> "Artifact":
+
+        return Artifact(
+            method=HTTPMethod(request.method or HTTPMethod.GET.value),
+            url=request.url,
+            headers=request.headers,
+            data=request.body,
+        )
+
+    def to_request(self) -> PreparedRequest:
+        return Request(
+            method=self.method.value,
+            url=self.url,
+            headers=self.headers,
+            data=self.data,
+        ).prepare()
+
+
 class Content(BaseModel):
     """Describes some extracted content that can be downloaded."""
 
@@ -109,9 +193,9 @@ class Content(BaseModel):
         description="The appropriate mimetype for the content.",
         min_length=1,
     )
-    requests: List[PreparedRequest] = Field(
-        title="Requests",
-        description="The requests to make to recreate the remote content locally.",
+    artifacts: List[Artifact] = Field(
+        title="Artifacts",
+        description="The artifacts to fetch to recreate the remote content locally.",
         min_items=1,
     )
     meta: Meta = Field(
@@ -129,3 +213,7 @@ class Content(BaseModel):
         title="Extra",
         description="Container for miscellaneous content properties.",
     )
+
+    @property
+    def extension(self) -> Optional[str]:
+        return mimetypes.guess_extension(self.type)

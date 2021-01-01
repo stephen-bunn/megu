@@ -5,9 +5,10 @@
 """Contains the abstractions necessary for the plugin discovery to work."""
 
 import abc
-from typing import Generator, Set
+from pathlib import Path
+from typing import Generator, List, Set, Tuple
 
-from ..types import Content, Url
+from ..types import Artifact, Content, Url
 
 
 class BasePlugin(abc.ABC):
@@ -59,4 +60,15 @@ class BasePlugin(abc.ABC):
 
         raise NotImplementedError(
             f"{self.__class__.__qualname__!s} must implement extract_content method"
+        )
+
+    @abc.abstractmethod
+    def merge_artifacts(
+        self,
+        artifacts: List[Tuple[Artifact, Path]],
+        to_path: Path,
+    ) -> Path:
+
+        raise NotImplementedError(
+            f"{self.__class__.__qualname__!s} must implement merge_artifacts method"
         )
