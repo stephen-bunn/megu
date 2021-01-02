@@ -28,4 +28,11 @@ def setup_app():
 
 @lru_cache
 def get_plugins() -> Dict[str, List[BasePlugin]]:
+    """Get the default dictionary of plugins available.
+
+    Returns:
+        Dict[str, List[:class:`~.plugin.base.BasePlugin`]]:
+            The dictionary of available plugins.
+    """
+
     return dict(discover_plugins(PLUGIN_DIRPATH))

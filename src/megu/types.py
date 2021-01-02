@@ -4,6 +4,8 @@
 
 """Contains definitions of types used throughout the project."""
 
+from __future__ import annotations
+
 import mimetypes
 from datetime import datetime
 from enum import Enum
@@ -81,6 +83,7 @@ class Meta(BaseModel):
 
 
 class HTTPMethod(Enum):
+    """Enumeration of the available HTTP methods that artifacts can use."""
 
     GET = "GET"
     HEAD = "HEAD"
@@ -94,7 +97,11 @@ class HTTPMethod(Enum):
 
 
 class Artifact(BaseModel):
+    """Describes a downloadable artifact that is part of some local content."""
+
     class Config:
+        """Model configuration for the Artifact model."""
+
         arbitrary_types_allowed = True
         keep_untouched = (cached_property,)
 
@@ -135,6 +142,13 @@ class Artifact(BaseModel):
 
     @cached_property
     def fingerprint(self) -> str:
+        """Get a computed unique identifier for the artifact.
+
+        Returns:
+            str:
+                The unique identifier for the artifact.
+        """
+
         fingerprint = hash_io(
             BytesIO(self._get_signature()),
             {HashType.XXHASH},
@@ -144,7 +158,17 @@ class Artifact(BaseModel):
         return fingerprint
 
     @classmethod
-    def from_request(cls, request: PreparedRequest) -> "Artifact":
+    def from_request(cls, request: PreparedRequest) -> Artifact:
+        """Produce an artifact from an existing prepared request.
+
+        Args:
+            request (:class:`~requests.PreparedRequest`):
+                The request to construct an artifact from.
+
+        Returns:
+            :class:`~types.Artifact`:
+                The newly produced artifact.
+        """
 
         return Artifact(
             method=HTTPMethod(request.method or HTTPMethod.GET.value),
@@ -154,6 +178,13 @@ class Artifact(BaseModel):
         )
 
     def to_request(self) -> PreparedRequest:
+        """Get a matching prepared request for the current artifact.
+
+        Returns:
+            :class:`~requests.PreparedRequest`:
+                The matching prepared request for the current artifact.
+        """
+
         return Request(
             method=self.method.value,
             url=self.url,
@@ -216,4 +247,23 @@ class Content(BaseModel):
 
     @property
     def extension(self) -> Optional[str]:
+        """File extension for the content.
+
+        Returns:
+            Optional[str]:
+                The appropriate file extension for the content if discoverable.
+        """
+
         return mimetypes.guess_extension(self.type)
+
+    @property
+    def filename(self) -> str:
+        """Filename for the content.
+
+        Returns:
+            str:
+                The appropriate filename for the content.
+        """
+
+        extension = self.extension
+        return f"{self.id!s}{extension if extension else ''!s}"

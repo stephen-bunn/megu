@@ -68,6 +68,18 @@ class BasePlugin(abc.ABC):
         artifacts: List[Tuple[Artifact, Path]],
         to_path: Path,
     ) -> Path:
+        """Merge downloaded artifacts to a singular local filepath.
+
+        Args:
+            artifacts (List[Tuple[:class:`~types.Artifact`, :class:`~pathlib.Path`]]):
+                The list of tuples containing artifacts and the downloaded filepath
+            to_path (:class:`~pathlib.Path`):
+                The path to merge the artifacts to.
+
+        Returns:
+            :class:`~pathlib.Path`:
+                The path the artifacts have been merged to.
+        """
 
         raise NotImplementedError(
             f"{self.__class__.__qualname__!s} must implement merge_artifacts method"

@@ -39,7 +39,6 @@ class BaseDownloader(abc.ABC):
         self,
         content: Content,
         max_connections: int = DEFAULT_MAX_CONNECTIONS,
-        progress_hook: Optional[Callable[[Content, int, int], Any]] = None,
     ) -> List[Tuple[Artifact, Path]]:
         """Download the artifacts of some content to temporary storage.
 
@@ -49,9 +48,6 @@ class BaseDownloader(abc.ABC):
             max_connections (int, optional):
                 The limit of connections to make to handle downloading the content.
                 Defaults to DEFAULT_MAX_CONNECTIONS.
-            progress_hook (Optional[Callable[[int, int], Any]], optional):
-                A callable hook to present the current download status.
-                Defaults to None.
 
         Yields:
             Tuple[PreparedRequest, Path]:

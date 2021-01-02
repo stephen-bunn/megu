@@ -58,7 +58,6 @@ class HttpDownloader(BaseDownloader):
         artifact_index: int,
         to_path: Path,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
-        progress_hook: Optional[Callable[[int], Any]] = None,
     ) -> Tuple[int, Artifact, Path]:
         """Download some artifact to a specific filepath.
 
@@ -70,9 +69,6 @@ class HttpDownloader(BaseDownloader):
             chunk_size (int, optional):
                 The byte size of chunks to stream the artifact data in.
                 Defaults to DEFAULT_CHUNK_SIZE.
-            progress_hook (Callable[[PreparedRequest, int, int], Any], optional):
-                Progress callable to record an artifacts download preogress.
-                Defaults to None.
 
         Returns:
             :class:`pathlib.Path`:
@@ -99,9 +95,6 @@ class HttpDownloader(BaseDownloader):
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     file_handle.write(chunk)
 
-                    if progress_hook:
-                        progress_hook(len(chunk))
-
         return (artifact_index, artifact, to_path)
 
     def _get_content_size(self, content: Content) -> int:
@@ -117,7 +110,6 @@ class HttpDownloader(BaseDownloader):
         self,
         content: Content,
         max_connections: int = DEFAULT_MAX_CONNECTIONS,
-        progress_hook: Optional[Callable[[int], Any]] = None,
     ) -> List[Tuple[Artifact, Path]]:
         """Download the artifacts of some content to temporary storage.
 
@@ -127,9 +119,6 @@ class HttpDownloader(BaseDownloader):
             max_connections (int, optional):
                 The limit of connections to make to handle downloading the content.
                 Defaults to DEFAULT_MAX_CONNECTIONS.
-            progress_hook (Optional[Callable[[int, int], Any]], optional):
-                A callable hook to present the current download status.
-                Defaults to None.
 
         Yields:
             Tuple[PreparedRequest, Path]:
@@ -147,7 +136,6 @@ class HttpDownloader(BaseDownloader):
                     executor.submit(
                         self.download_artifact,
                         *(artifact, artifact_index, to_path),
-                        progress_hook=progress_hook,
                     )
                 ] = artifact
 
