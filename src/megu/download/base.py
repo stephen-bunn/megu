@@ -6,7 +6,7 @@
 
 import abc
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Tuple
+from typing import List, Tuple
 
 from ..log import instance as log
 from ..types import Artifact, Content
@@ -22,7 +22,7 @@ class BaseDownloader(abc.ABC):
         """Check if some given content can be handled by the downloader.
 
         Args:
-            content (:class:`~.types.Content`):
+            content (~.types.Content):
                 The content to check against the current content.
 
         Returns:
@@ -43,7 +43,7 @@ class BaseDownloader(abc.ABC):
         """Download the artifacts of some content to temporary storage.
 
         Args:
-            content (:class:`~.types.Content`):
+            content (~.types.Content):
                 The content to download.
             max_connections (int, optional):
                 The limit of connections to make to handle downloading the content.

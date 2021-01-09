@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import abc
 import mimetypes
 from datetime import datetime
 from enum import Enum
@@ -82,6 +83,28 @@ class Meta(BaseModel):
     )
 
 
+class Artifact(abc.ABC, BaseModel):
+    """The base artifact class that artifact types must inherit from."""
+
+    @abc.abstractproperty
+    def fingerprint(self) -> str:
+        """Get the unique identifier of an artifact.
+
+        Raises:
+            NotImplementedError:
+                If a subclass simply calls ``super().fingerprint``.
+                Subclasses must implement this property.
+
+        Returns:
+            str:
+                A string fingerprint of the artifact.
+        """
+
+        raise NotImplementedError(
+            f"{self.__class__.__qualname__!s} must implement fingerprint property"
+        )
+
+
 class HTTPMethod(Enum):
     """Enumeration of the available HTTP methods that artifacts can use."""
 
@@ -96,8 +119,8 @@ class HTTPMethod(Enum):
     PATCH = "PATCH"
 
 
-class Artifact(BaseModel):
-    """Describes a downloadable artifact that is part of some local content."""
+class HTTPArtifact(Artifact):
+    """Describes a downloadable HTTP artifact that is part of some local content."""
 
     class Config:
         """Model configuration for the Artifact model."""
@@ -158,7 +181,7 @@ class Artifact(BaseModel):
         return fingerprint
 
     @classmethod
-    def from_request(cls, request: PreparedRequest) -> Artifact:
+    def from_request(cls, request: PreparedRequest) -> HTTPArtifact:
         """Produce an artifact from an existing prepared request.
 
         Args:
@@ -166,11 +189,11 @@ class Artifact(BaseModel):
                 The request to construct an artifact from.
 
         Returns:
-            :class:`~types.Artifact`:
+            :class:`~types.HTTPArtifact`:
                 The newly produced artifact.
         """
 
-        return Artifact(
+        return HTTPArtifact(
             method=HTTPMethod(request.method or HTTPMethod.GET.value),
             url=request.url,
             headers=request.headers,

@@ -4,16 +4,17 @@
 
 """Contains logic for handling HTTP downloads."""
 
+import warnings
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 from cached_property import cached_property
 from requests import Session
 
 from ..constants import STAGING_DIRPATH
 from ..log import instance as log
-from ..types import Artifact, Content
+from ..types import Artifact, Content, HTTPArtifact
 from .base import BaseDownloader
 
 DEFAULT_CHUNK_SIZE = 2 ** 12
@@ -49,12 +50,11 @@ class HttpDownloader(BaseDownloader):
                 otherwise False
         """
 
-        # FIXME: really stupid implementation for WIP testing
-        return True
+        return all(isinstance(artifact, HTTPArtifact) for artifact in content.artifacts)
 
     def download_artifact(
         self,
-        artifact: Artifact,
+        artifact: HTTPArtifact,
         artifact_index: int,
         to_path: Path,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
@@ -62,7 +62,7 @@ class HttpDownloader(BaseDownloader):
         """Download some artifact to a specific filepath.
 
         Args:
-            request (:class:`requests.PreparedRequest`):
+            request (~types.HTTPArtifact):
                 The artifact to download.
             to_path (:class:`pathlib.Path`):
                 The filepath to download the artifact to.
@@ -98,9 +98,27 @@ class HttpDownloader(BaseDownloader):
         return (artifact_index, artifact, to_path)
 
     def _get_content_size(self, content: Content) -> int:
+        """Get the full byte size of the given content.
+
+        Args:
+            content (~.types.Content):
+                The content to get the byte size of.
+
+        Returns:
+            int:
+                The size of the given content.
+        """
+
         size = 0
 
         for artifact in content.artifacts:
+            if not isinstance(artifact, HTTPArtifact):
+                warnings.warn(
+                    f"{self.__class__.__qualname__!s} encountered artifact "
+                    f"{artifact!r}, expected instance of {HTTPArtifact!r}"
+                )
+                continue
+
             response = self.session.head(artifact.url)
             size += int(response.headers.get("Content-Length", 0))
 
@@ -114,7 +132,7 @@ class HttpDownloader(BaseDownloader):
         """Download the artifacts of some content to temporary storage.
 
         Args:
-            content (:class:`~.types.Content`):
+            content (~.types.Content):
                 The content to download.
             max_connections (int, optional):
                 The limit of connections to make to handle downloading the content.
