@@ -4,14 +4,16 @@
 
 """Contains helpful service functions that should really only be used during runtime."""
 
+import shutil
 from pathlib import Path
 from typing import Generator, Optional, Union
 
 from .constants import PLUGIN_DIRPATH
 from .download import BaseDownloader, discover_downloaders
 from .download.http import HttpDownloader
+from .helpers import temporary_file
 from .log import instance as log
-from .models import Content, Url
+from .models import Content, Manifest, Url
 from .plugin import BasePlugin, discover_plugins
 from .plugin.generic import GenericPlugin
 
@@ -139,3 +141,35 @@ def get_downloader(content: Content) -> BaseDownloader:
         f"falling back to {HttpDownloader!r}"
     )
     return HttpDownloader()
+
+
+def merge_manifest(plugin: BasePlugin, manifest: Manifest, to_path: Path) -> Path:
+    """Merge a manifest with the given plugin and finalize content to the given path.
+
+    Args:
+        plugin (~plugin.base.BasePlugin):
+            The plugin that was used to extract the content of the manifest.
+        manifest (~models.Manifest):
+            The resulting content and artifact manifest.
+        to_path (~pathlib.Path):
+            The path the content should be finalized at.
+
+    Raises:
+        FileExistsError:
+            If the given output path already exists.
+
+    Returns:
+        ~pathlib.Path:
+            The path the merged content was finalized to.
+    """
+
+    if to_path.exists():
+        raise FileExistsError(f"File at {to_path!s} already exists")
+
+    # manifest artifacts must be merged on the same filesystem, and after,
+    # moved to the appropriate output location
+    with temporary_file(manifest.content.id, "wb") as (temp_path, _):
+        merged_path = plugin.merge_manifest(manifest=manifest, to_path=temp_path)
+        shutil.copy2(merged_path, to_path)
+
+        return to_path

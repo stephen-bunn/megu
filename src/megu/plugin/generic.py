@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Generator, Literal
 
 from ..hasher import HashType, hash_io
-from ..helpers import use_session
+from ..helpers import http_session
 from ..log import instance as log
 from ..models import Content, HttpMethod, HttpResource, Manifest, Url
 from .base import BasePlugin
@@ -77,7 +77,7 @@ class GenericPlugin(BasePlugin):
                 The extracted content from the given Url instance.
         """
 
-        with use_session() as session:
+        with http_session() as session:
             log.debug(f"Requesting HEAD details from {url.url!r}")
             head = session.head(url.url)
 

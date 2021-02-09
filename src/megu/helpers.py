@@ -5,15 +5,25 @@
 """Contains helper methods that plugins can use to simplify usage."""
 
 from contextlib import contextmanager
-from typing import Generator
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from typing import IO, Generator, Tuple
 
 from bs4 import BeautifulSoup
 from requests import Session
 
+from .constants import TEMP_DIRPATH
+
+
+def noop(*args, **kwargs) -> None:
+    """Noop function that does absolutely nothing."""
+
+    return None
+
 
 @contextmanager
-def use_session() -> Generator[Session, None, None]:
-    """Get a requests HTTP session for making basic requests.
+def http_session() -> Generator[Session, None, None]:
+    """Context manager for creating a requests HTTP session to make basic requests.
 
     Yields:
         :class:`~requests.Session`:
@@ -22,6 +32,36 @@ def use_session() -> Generator[Session, None, None]:
 
     with Session() as session:
         yield session
+
+
+@contextmanager
+def temporary_file(
+    prefix: str,
+    mode: str,
+    dirpath: Path = TEMP_DIRPATH,
+) -> Generator[Tuple[Path, IO], None, None]:
+    """Context manager for opening a temporary file at the appropriate location.
+
+    Args:
+        prefix (str):
+            The prefix of the temporary file.
+        mode (str):
+            The mode the file should be opened with.
+        dirpath (~pathlib.Path, optional):
+            The directory path the temporary file should be opened in.
+            Defaults to ``TEMP_DIRPATH``.
+
+    Yields:
+        Tuple[~pathlib.Path, IO]:
+            A tuple containing the temporary file's path and the file handle.
+    """
+
+    with NamedTemporaryFile(
+        prefix=f"{prefix!s}-",
+        mode=mode,
+        dir=dirpath,
+    ) as temp_handle:
+        yield Path(temp_handle.name), temp_handle
 
 
 def get_soup(markup: str) -> BeautifulSoup:

@@ -6,17 +6,24 @@
 
 import abc
 from pathlib import Path
-from typing import List, Tuple
 
 from ..log import instance as log
 from ..models import Content
-from ..models.content import Resource
+from ..models.content import Manifest
 
 DEFAULT_MAX_CONNECTIONS = 8
 
 
 class BaseDownloader(abc.ABC):
     """The base downloader that all content downloaders should inherit from."""
+
+    @abc.abstractproperty
+    def name(self) -> str:
+        """Human readable name for the plugin."""
+
+        raise NotADirectoryError(
+            f"{self.__class__.__qualname__!s} must implement name property"
+        )
 
     @abc.abstractclassmethod
     def can_handle(cls, content: Content) -> bool:
@@ -40,7 +47,7 @@ class BaseDownloader(abc.ABC):
         self,
         content: Content,
         max_connections: int = DEFAULT_MAX_CONNECTIONS,
-    ) -> List[Tuple[Resource, Path]]:
+    ) -> Manifest:
         """Download the resources of some content to temporary storage.
 
         Args:
@@ -51,8 +58,8 @@ class BaseDownloader(abc.ABC):
                 Defaults to DEFAULT_MAX_CONNECTIONS.
 
         Yields:
-            Tuple[~models.content.Resource, Path]:
-                A tuple of the resource and the path the resource was downloaded to.
+            ~models.Manifest:
+                The manifest of downloaded content and local file artifacts.
         """
 
         raise NotImplementedError(

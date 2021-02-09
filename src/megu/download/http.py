@@ -15,7 +15,7 @@ from requests import Session
 from ..constants import STAGING_DIRPATH
 from ..log import instance as log
 from ..models import Content, HttpResource
-from ..models.content import Resource
+from ..models.content import Manifest, Resource
 from .base import BaseDownloader
 
 DEFAULT_CHUNK_SIZE = 2 ** 12
@@ -24,6 +24,8 @@ DEFAULT_MAX_CONNECTIONS = 8
 
 class HttpDownloader(BaseDownloader):
     """Downloader for traditional HTTP resources."""
+
+    name = "HTTP Downloader"
 
     @cached_property
     def session(self) -> Session:
@@ -129,7 +131,7 @@ class HttpDownloader(BaseDownloader):
         self,
         content: Content,
         max_connections: int = DEFAULT_MAX_CONNECTIONS,
-    ) -> List[Tuple[Resource, Path]]:
+    ) -> Manifest:
         """Download the resource of some content to temporary storage.
 
         Args:
@@ -140,8 +142,8 @@ class HttpDownloader(BaseDownloader):
                 Defaults to DEFAULT_MAX_CONNECTIONS.
 
         Yields:
-            Tuple[~models.content.Resource, Path]:
-                A tuple of the resource and the path the resource was downloaded to.
+            ~models.Manifest:
+                The manifest of downloaded content and local file artifacts.
         """
 
         results: List[Tuple[int, Resource, Path]] = []
@@ -161,9 +163,12 @@ class HttpDownloader(BaseDownloader):
             for future in as_completed(request_futures):
                 results.append(future.result())
 
-        return [
-            (resource, resource_path)
-            for _, resource, resource_path in sorted(
-                results, key=lambda result: result[0]
-            )
-        ]
+        return Manifest(
+            content=content,
+            artifacts=[
+                (resource, resource_path)
+                for _, resource, resource_path in sorted(
+                    results, key=lambda result: result[0]
+                )
+            ],
+        )

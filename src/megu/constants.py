@@ -15,4 +15,5 @@ APP_VERSION = "0.1.0"
 CONFIG_DIRPATH = Path(typer.get_app_dir(app_name=APP_NAME)).absolute()
 LOG_DIRPATH = CONFIG_DIRPATH.joinpath("logs")
 PLUGIN_DIRPATH = CONFIG_DIRPATH.joinpath("plugins")
-STAGING_DIRPATH = Path(tempfile.gettempdir()).joinpath(f"{APP_NAME}-staging")
+TEMP_DIRPATH = Path(tempfile.gettempdir()).joinpath(APP_NAME)
+STAGING_DIRPATH = TEMP_DIRPATH.joinpath(".staging")
