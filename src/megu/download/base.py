@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import List, Tuple
 
 from ..log import instance as log
-from ..types import Artifact, Content
+from ..models import Content
+from ..models.content import Resource
 
 DEFAULT_MAX_CONNECTIONS = 8
 
@@ -22,7 +23,7 @@ class BaseDownloader(abc.ABC):
         """Check if some given content can be handled by the downloader.
 
         Args:
-            content (~.types.Content):
+            content (~models.Content):
                 The content to check against the current content.
 
         Returns:
@@ -39,19 +40,19 @@ class BaseDownloader(abc.ABC):
         self,
         content: Content,
         max_connections: int = DEFAULT_MAX_CONNECTIONS,
-    ) -> List[Tuple[Artifact, Path]]:
-        """Download the artifacts of some content to temporary storage.
+    ) -> List[Tuple[Resource, Path]]:
+        """Download the resources of some content to temporary storage.
 
         Args:
-            content (~.types.Content):
+            content (~models.Content):
                 The content to download.
             max_connections (int, optional):
                 The limit of connections to make to handle downloading the content.
                 Defaults to DEFAULT_MAX_CONNECTIONS.
 
         Yields:
-            Tuple[PreparedRequest, Path]:
-                A tuple of the artifact and the path the artifact was downloaded to.
+            Tuple[~models.content.Resource, Path]:
+                A tuple of the resource and the path the resource was downloaded to.
         """
 
         raise NotImplementedError(

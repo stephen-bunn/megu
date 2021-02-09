@@ -14,7 +14,8 @@ from requests import Session
 
 from ..constants import STAGING_DIRPATH
 from ..log import instance as log
-from ..types import Artifact, Content, HTTPArtifact
+from ..models import Content, HttpResource
+from ..models.content import Resource
 from .base import BaseDownloader
 
 DEFAULT_CHUNK_SIZE = 2 ** 12
@@ -22,15 +23,15 @@ DEFAULT_MAX_CONNECTIONS = 8
 
 
 class HttpDownloader(BaseDownloader):
-    """Downloader for traditional HTTP artifacts."""
+    """Downloader for traditional HTTP resources."""
 
     @cached_property
     def session(self) -> Session:
-        """HTTP session to use for downloading artifacts.
+        """HTTP session to use for downloading resources.
 
         Returns:
             :class:`~requests.Session`:
-                The HTTP session to use for downloading artifacts.
+                The HTTP session to use for downloading resources.
         """
 
         if not hasattr(self, "_session"):
@@ -50,36 +51,36 @@ class HttpDownloader(BaseDownloader):
                 otherwise False
         """
 
-        return all(isinstance(artifact, HTTPArtifact) for artifact in content.artifacts)
+        return all(isinstance(resource, HttpResource) for resource in content.resources)
 
-    def download_artifact(
+    def download_resource(
         self,
-        artifact: HTTPArtifact,
-        artifact_index: int,
+        resource: HttpResource,
+        resource_index: int,
         to_path: Path,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
-    ) -> Tuple[int, Artifact, Path]:
-        """Download some artifact to a specific filepath.
+    ) -> Tuple[int, Resource, Path]:
+        """Download some resource to a specific filepath.
 
         Args:
-            request (~types.HTTPArtifact):
-                The artifact to download.
+            request (~types.HTTPResource):
+                The resource to download.
             to_path (:class:`pathlib.Path`):
-                The filepath to download the artifact to.
+                The filepath to download the resource to.
             chunk_size (int, optional):
-                The byte size of chunks to stream the artifact data in.
+                The byte size of chunks to stream the resource data in.
                 Defaults to DEFAULT_CHUNK_SIZE.
 
         Returns:
             :class:`pathlib.Path`:
-                The path the artifact was downloaded to.
+                The path the resource was downloaded to.
         """
 
-        with log.contextualize(artifact=artifact):
-            log.debug(f"Making request for artifact {artifact.fingerprint!r}")
-            response = self.session.send(artifact.to_request(), stream=True)
+        with log.contextualize(resource=resource):
+            log.debug(f"Making request for resource {resource.fingerprint!r}")
+            response = self.session.send(resource.to_request(), stream=True)
             log.success(
-                f"Artifact {artifact.fingerprint!r} resolved to status "
+                f"Resource {resource.fingerprint!r} resolved to status "
                 f"{response.status_code!r}"
             )
 
@@ -95,7 +96,7 @@ class HttpDownloader(BaseDownloader):
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     file_handle.write(chunk)
 
-        return (artifact_index, artifact, to_path)
+        return (resource_index, resource, to_path)
 
     def _get_content_size(self, content: Content) -> int:
         """Get the full byte size of the given content.
@@ -111,15 +112,15 @@ class HttpDownloader(BaseDownloader):
 
         size = 0
 
-        for artifact in content.artifacts:
-            if not isinstance(artifact, HTTPArtifact):
+        for resource in content.resources:
+            if not isinstance(resource, HttpResource):
                 warnings.warn(
-                    f"{self.__class__.__qualname__!s} encountered artifact "
-                    f"{artifact!r}, expected instance of {HTTPArtifact!r}"
+                    f"{self.__class__.__qualname__!s} encountered resource "
+                    f"{resource!r}, expected instance of {HttpResource!r}"
                 )
                 continue
 
-            response = self.session.head(artifact.url)
+            response = self.session.head(resource.url)
             size += int(response.headers.get("Content-Length", 0))
 
         return size
@@ -128,8 +129,8 @@ class HttpDownloader(BaseDownloader):
         self,
         content: Content,
         max_connections: int = DEFAULT_MAX_CONNECTIONS,
-    ) -> List[Tuple[Artifact, Path]]:
-        """Download the artifacts of some content to temporary storage.
+    ) -> List[Tuple[Resource, Path]]:
+        """Download the resource of some content to temporary storage.
 
         Args:
             content (~.types.Content):
@@ -139,30 +140,30 @@ class HttpDownloader(BaseDownloader):
                 Defaults to DEFAULT_MAX_CONNECTIONS.
 
         Yields:
-            Tuple[PreparedRequest, Path]:
-                A tuple of the artifact and the path the artifact was downloaded to.
+            Tuple[~models.content.Resource, Path]:
+                A tuple of the resource and the path the resource was downloaded to.
         """
 
-        results: List[Tuple[int, Artifact, Path]] = []
-        request_futures: Dict[Future, Artifact] = {}
+        results: List[Tuple[int, Resource, Path]] = []
+        request_futures: Dict[Future, Resource] = {}
         with ThreadPoolExecutor(max_workers=max_connections) as executor:
-            for artifact_index, artifact in enumerate(content.artifacts):
+            for resource_index, resource in enumerate(content.resources):
                 to_path = STAGING_DIRPATH.joinpath(
-                    f"{content.id!s}.{artifact.fingerprint!s}"
+                    f"{content.id!s}.{resource.fingerprint!s}"
                 )
                 request_futures[
                     executor.submit(
-                        self.download_artifact,
-                        *(artifact, artifact_index, to_path),
+                        self.download_resource,
+                        *(resource, resource_index, to_path),
                     )
-                ] = artifact
+                ] = resource
 
             for future in as_completed(request_futures):
                 results.append(future.result())
 
         return [
-            (artifact, artifact_path)
-            for _, artifact, artifact_path in sorted(
+            (resource, resource_path)
+            for _, resource, resource_path in sorted(
                 results, key=lambda result: result[0]
             )
         ]

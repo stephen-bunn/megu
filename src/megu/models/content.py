@@ -2,25 +2,18 @@
 # Copyright (c) 2020 Stephen Bunn <stephen@bunn.io>
 # ISC License <https://choosealicense.com/licenses/isc>
 
-"""Contains definitions of types used throughout the project."""
-
-from __future__ import annotations
+"""Contains definitions of content types used throughout the project."""
 
 import abc
 import mimetypes
 from datetime import datetime
-from enum import Enum
-from io import BytesIO
-from typing import Any, Callable, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from cached_property import cached_property
 from furl.furl import furl
 from pydantic import AnyHttpUrl, BaseModel, Field
-from requests import PreparedRequest
-from requests.sessions import Request
 
-from .hasher import HashType, hash_io
-from .log import instance as log
+from ..hasher import HashType
 
 Url = furl
 
@@ -83,12 +76,12 @@ class Meta(BaseModel):
     )
 
 
-class Artifact(abc.ABC, BaseModel):
-    """The base artifact class that artifact types must inherit from."""
+class Resource(abc.ABC, BaseModel):
+    """The base resource class that resource types must inherit from."""
 
     @abc.abstractproperty
     def fingerprint(self) -> str:
-        """Get the unique identifier of an artifact.
+        """Get the unique identifier of an resource.
 
         Raises:
             NotImplementedError:
@@ -97,123 +90,12 @@ class Artifact(abc.ABC, BaseModel):
 
         Returns:
             str:
-                A string fingerprint of the artifact.
+                A string fingerprint of the resource.
         """
 
         raise NotImplementedError(
             f"{self.__class__.__qualname__!s} must implement fingerprint property"
         )
-
-
-class HTTPMethod(Enum):
-    """Enumeration of the available HTTP methods that artifacts can use."""
-
-    GET = "GET"
-    HEAD = "HEAD"
-    POST = "POST"
-    PUT = "PUT"
-    DELETE = "DELETE"
-    CONNECT = "CONNECT"
-    OPTIONS = "OPTIONS"
-    TRACE = "TRACE"
-    PATCH = "PATCH"
-
-
-class HTTPArtifact(Artifact):
-    """Describes a downloadable HTTP artifact that is part of some local content."""
-
-    class Config:
-        """Model configuration for the Artifact model."""
-
-        arbitrary_types_allowed = True
-        keep_untouched = (cached_property,)
-
-    method: HTTPMethod = Field(
-        title="Method",
-        description="HTTP Method to fetch the artifact URL.",
-    )
-    url: AnyHttpUrl = Field(
-        title="URL",
-        description="The artifact URL to fetch.",
-    )
-    headers: dict = Field(
-        default_factory=dict,
-        title="Headers",
-        description="The headers to fetch the artifact URL.",
-    )
-    data: Optional[bytes] = Field(
-        default=None,
-        title="Data",
-        description="The request data to fetch the artifact URL.",
-    )
-    auth: Optional[Callable[[Request], Request]] = Field(
-        default=None,
-        title="Authentication Handler",
-        description="Callable to handle authenticating a request.",
-    )
-
-    def _get_signature(self) -> bytes:
-        signature = bytes(
-            "|".join((str(self.method.value), str(self.url), str(self.headers))),
-            "utf-8",
-        )
-
-        if self.data is not None:
-            signature += b"|" + self.data
-
-        return signature
-
-    @cached_property
-    def fingerprint(self) -> str:
-        """Get a computed unique identifier for the artifact.
-
-        Returns:
-            str:
-                The unique identifier for the artifact.
-        """
-
-        fingerprint = hash_io(
-            BytesIO(self._get_signature()),
-            {HashType.XXHASH},
-        )[HashType.XXHASH]
-        log.debug(f"Computed fingerprint {fingerprint!r} for artifact {self!r}")
-
-        return fingerprint
-
-    @classmethod
-    def from_request(cls, request: PreparedRequest) -> HTTPArtifact:
-        """Produce an artifact from an existing prepared request.
-
-        Args:
-            request (:class:`~requests.PreparedRequest`):
-                The request to construct an artifact from.
-
-        Returns:
-            :class:`~types.HTTPArtifact`:
-                The newly produced artifact.
-        """
-
-        return HTTPArtifact(
-            method=HTTPMethod(request.method or HTTPMethod.GET.value),
-            url=request.url,
-            headers=request.headers,
-            data=request.body,
-        )
-
-    def to_request(self) -> PreparedRequest:
-        """Get a matching prepared request for the current artifact.
-
-        Returns:
-            :class:`~requests.PreparedRequest`:
-                The matching prepared request for the current artifact.
-        """
-
-        return Request(
-            method=self.method.value,
-            url=self.url,
-            headers=self.headers,
-            data=self.data,
-        ).prepare()
 
 
 class Content(BaseModel):
@@ -247,9 +129,9 @@ class Content(BaseModel):
         description="The appropriate mimetype for the content.",
         min_length=1,
     )
-    artifacts: List[Artifact] = Field(
-        title="Artifacts",
-        description="The artifacts to fetch to recreate the remote content locally.",
+    resources: List[Resource] = Field(
+        title="Resources",
+        description="The resources to fetch to recreate the remote content locally.",
         min_items=1,
     )
     meta: Meta = Field(
@@ -290,3 +172,17 @@ class Content(BaseModel):
 
         extension = self.extension
         return f"{self.id!s}{extension if extension else ''!s}"
+
+
+class Manifest(BaseModel):
+    """Describes the downloaded artifacts ready to be merged."""
+
+    content: Content = Field(
+        title="Content",
+        description="The content responsible for the downloaded manifest.",
+    )
+    artifacts: List[Tuple[Resource, Path]] = Field(
+        title="Artifacts",
+        description="The list of pairs of downloaded resources and the artifact path.",
+        min_items=1,
+    )

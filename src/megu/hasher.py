@@ -47,7 +47,7 @@ class HashType(Enum):
     BLAKE2B = "blake2b"
     BLAKE2S = "blake2s"
 
-    # NOTE: Enums still consider class-managled class properties as values in the
+    # NOTE: Enums still consider class-mangled class properties as values in the
     # enumeration. So you can do HashType._HashType__available_hashers or
     # HashType("__available_hashers") and it's *technically* valid.
     __available_hashers: Dict[str, Hasher_T] = {
@@ -78,7 +78,7 @@ def hash_io(
     """Calculate the requested hash types for some given binary IO instance.
 
     >>> from io import BytesIO
-    >>> from modist.package.hasher import hash_io, HashType
+    >>> from megu.hasher import hash_io, HashType
     >>> hash_io(BytesIO(b"Hey, I'm a string"), {HashType("xxhash"), HashType.MD5})
     {
         <HashType.XXHASH: 'xxhash'>: 'd299da7e31fb9c47',
@@ -90,7 +90,7 @@ def hash_io(
     This typically involves having to read the entire string and encode it.
 
     >>> from io import BytesIO, StringIO
-    >>> from modist.package.hasher import hash_io, HashType
+    >>> from megu.hasher import hash_io, HashType
     >>> string_io = StringIO("Hey, I'm a string")
     >>> byte_io = BytesIO(string_io.read().encode("utf-8"))
     >>> hash_io(byte_io, {HashType.XXHASH, HashType("md5")})
@@ -99,13 +99,22 @@ def hash_io(
         <HashType.MD5: 'md5'>: '25cb7b2c4e2064c1deebac4b66195c9c'
     }
 
-    :param ~typing.BinaryIO io: The IO to calculate hashes for
-    :param Set[HashType] types: The set of names for hash types to calculate
-    :param int chunk_size: The size of bytes to have loaded from the buffer into memory
-        at a time, optional, defaults to ``DEFAULT_CHUNK_SIZE``
-    :raises ValueError: If one of the given types is not supported
-    :return: A dictionary of hash type strings and the calculated hexdigest of the hash
-    :rtype: Dict[HashType, str]
+    Args:
+        io (~typing.BinaryIO):
+            The IO to calculate hashes for.
+        types (Set[~HashType]):
+            The set of names for hash types to calculate.
+        chunk_size (int):
+            The size of bytes to have loaded from the buffer into memory at a time.
+            Defaults to ``DEFAULT_CHUNK_SIZE``.
+
+    Raises:
+        ValueError:
+            If one of the given types is not supported.
+
+    Returns:
+        Dict[~HashType, str]:
+            A dictionary of hash type strings and the calculated hexdigest of the hash.
     """
 
     log.debug(f"Hashing {io!r} with types {types!r} at chunks of {chunk_size!r} bytes")
@@ -132,7 +141,7 @@ def hash_file(
     Basic usage of this function typically looks like the following:
 
     >>> from pathlib import Path
-    >>> from modist.package.hasher import hash_file, HashType
+    >>> from megu.hasher import hash_file, HashType
     >>> big_file_path = Path("/home/USER/A/PATH/TO/A/BIG/FILE")
     >>> hash_file(big_file_path, {HashType("md5"), HashType.XXHASH})
     {
@@ -140,18 +149,28 @@ def hash_file(
         <HashType.MD5: 'md5'>: 'a46062d24103b87560b2dc0887a1d5de'
     }
 
-    :param ~pathlib.Path filepath: The filepath to calculate hashes for
-    :param Set[HashType] types: The set of names for hash types to calculate
-    :param int chunk_size: The size of bytes to have loaded from the file into memory
-        at a time, optional, defaults to ``DEFAULT_CHUNK_SIZE``
-    :raises FileNotFoundError: If the given filepath does not point to an existing file
-    :raises ValueError: If one of the given types is not supported
-    :return: A dictionary of hash type strings and the calculated hexdigest of the hash
-    :rtype: Dict[HashType, str]
+    Args:
+        filepath (~pathlib.Path):
+            The filepath to calculate hashes for.
+        types (Set[~HashType]):
+            The set of names for hash types to calculate.
+        chunk_size (int):
+            The size of bytes ot have loaded from the file into memory at a time.
+            Defaults to ``DEFAULT_CHUNK_SIZE``.
+
+    Raises:
+        FileNotFoundError:
+            If the given filepath does not point to an existing file.
+        ValueError:
+            If one of the given types is not supported.
+
+    Returns:
+        Dict[~HashType, str]:
+            A dictionary of hash type strings and the calculated hexdigest of the hash.
     """
 
     if not filepath.is_file():
-        raise FileNotFoundError(f"No such file {filepath.as_posix()!r} exists")
+        raise FileNotFoundError(f"No such file {filepath!s} exists")
 
     with filepath.open("rb") as file_io:
         return hash_io(io=file_io, types=types, chunk_size=chunk_size)  # type: ignore

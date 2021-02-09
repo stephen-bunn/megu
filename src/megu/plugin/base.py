@@ -6,9 +6,9 @@
 
 import abc
 from pathlib import Path
-from typing import Generator, List, Set, Tuple
+from typing import Generator, Set
 
-from ..types import Artifact, Content, Url
+from ..models import Content, Manifest, Url
 
 
 class BasePlugin(abc.ABC):
@@ -63,24 +63,20 @@ class BasePlugin(abc.ABC):
         )
 
     @abc.abstractmethod
-    def merge_artifacts(
-        self,
-        artifacts: List[Tuple[Artifact, Path]],
-        to_path: Path,
-    ) -> Path:
-        """Merge downloaded artifacts to a singular local filepath.
+    def merge_manifest(self, manifest: Manifest, to_path: Path) -> Path:
+        """Merge downloaded artifacts from a manifest to a singular local filepath.
 
         Args:
-            artifacts (List[Tuple[:class:`~types.Artifact`, :class:`~pathlib.Path`]]):
-                The list of tuples containing artifacts and the downloaded filepath
-            to_path (:class:`~pathlib.Path`):
-                The path to merge the artifacts to.
+            manifest (~models.Manifest):
+                The manifest containing the content and its downloaded artifacts.
+            to_path (~pathlib.Path):
+                The path to merge to artifacts to.
 
         Returns:
-            :class:`~pathlib.Path`:
+            ~pathlib.Path:
                 The path the artifacts have been merged to.
         """
 
         raise NotImplementedError(
-            f"{self.__class__.__qualname__!s} must implement merge_artifacts method"
+            f"{self.__class__.__qualname__!s} must implement merge_manifest method"
         )
