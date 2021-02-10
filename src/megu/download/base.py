@@ -6,6 +6,7 @@
 
 import abc
 from pathlib import Path
+from typing import Any, Callable, Optional
 
 from ..log import instance as log
 from ..models import Content
@@ -47,6 +48,7 @@ class BaseDownloader(abc.ABC):
         self,
         content: Content,
         max_connections: int = DEFAULT_MAX_CONNECTIONS,
+        update_hook: Optional[Callable[[int], Any]] = None,
     ) -> Manifest:
         """Download the resources of some content to temporary storage.
 
@@ -56,6 +58,9 @@ class BaseDownloader(abc.ABC):
             max_connections (int, optional):
                 The limit of connections to make to handle downloading the content.
                 Defaults to DEFAULT_MAX_CONNECTIONS.
+            update_hook (Optional[Callable[[int], Any]], optional):
+                Callable for reporting downloaded chunk sizes.
+                Defaults to None.
 
         Yields:
             ~models.Manifest:

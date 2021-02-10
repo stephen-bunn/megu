@@ -7,7 +7,7 @@
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from cached_property import cached_property
 from requests import Session
@@ -61,6 +61,7 @@ class HttpDownloader(BaseDownloader):
         resource_index: int,
         to_path: Path,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
+        update_hook: Optional[Callable[[int], Any]] = None,
     ) -> Tuple[int, Resource, Path]:
         """Download some resource to a specific filepath.
 
@@ -72,6 +73,9 @@ class HttpDownloader(BaseDownloader):
             chunk_size (int, optional):
                 The byte size of chunks to stream the resource data in.
                 Defaults to DEFAULT_CHUNK_SIZE.
+            update_hook (Optional[Callable[[int], Any]], optional):
+                Callable for reporting downloaded chunk sizes.
+                Defaults to None.
 
         Returns:
             :class:`pathlib.Path`:
@@ -97,6 +101,9 @@ class HttpDownloader(BaseDownloader):
 
                 for chunk in response.iter_content(chunk_size=chunk_size):
                     file_handle.write(chunk)
+
+                    if update_hook is not None:
+                        update_hook(len(chunk))
 
         return (resource_index, resource, to_path)
 
@@ -131,6 +138,7 @@ class HttpDownloader(BaseDownloader):
         self,
         content: Content,
         max_connections: int = DEFAULT_MAX_CONNECTIONS,
+        update_hook: Optional[Callable[[int], Any]] = None,
     ) -> Manifest:
         """Download the resource of some content to temporary storage.
 
@@ -140,6 +148,9 @@ class HttpDownloader(BaseDownloader):
             max_connections (int, optional):
                 The limit of connections to make to handle downloading the content.
                 Defaults to DEFAULT_MAX_CONNECTIONS.
+            update_hook (Optional[Callable[[int], Any]], optional):
+                Callable for reporting downloaded chunk sizes.
+                Defaults to None.
 
         Yields:
             ~models.Manifest:
@@ -157,6 +168,7 @@ class HttpDownloader(BaseDownloader):
                     executor.submit(
                         self.download_resource,
                         *(resource, resource_index, to_path),
+                        **dict(update_hook=update_hook),
                     )
                 ] = resource
 

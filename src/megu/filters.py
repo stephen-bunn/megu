@@ -4,12 +4,13 @@
 
 """Contains some really basic content filters."""
 
+from itertools import groupby
 from typing import Iterable
 
 from .models import Content
 
 
-def best_content(content: Iterable[Content]) -> Content:
+def best_content(content: Iterable[Content]) -> Iterable[Content]:
     """Get the best quality content from the extracted content iterator.
 
     Args:
@@ -21,4 +22,5 @@ def best_content(content: Iterable[Content]) -> Content:
             The highest quality content
     """
 
-    return max(content, key=lambda c: c.quality)
+    for _, content_items in groupby(content, key=lambda c: c.id):
+        yield max(content_items, key=lambda c: c.quality)
