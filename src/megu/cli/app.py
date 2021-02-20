@@ -14,6 +14,7 @@ from tqdm import tqdm
 from ..filters import best_content
 from ..hasher import HashType, hash_file
 from ..log import configure_logger, get_logger
+from ..log import instance as log
 from ..plugin.generic import GenericPlugin
 from ..services import get_downloader, get_plugin, merge_manifest, normalize_url
 from .plugin import plugin_app
@@ -61,6 +62,7 @@ def main(
 
 
 @app.command("get")
+@log.catch()
 def get(
     ctx: typer.Context,
     from_url: str = typer.Argument(..., metavar="URL"),
