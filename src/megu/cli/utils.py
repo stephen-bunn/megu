@@ -4,13 +4,12 @@
 
 """Contains generic helpers that the CLI needs to isolate."""
 
-
 from functools import partial
 from typing import Any, Callable
 
 import typer
 
-from ..constants import CONFIG_DIRPATH, LOG_DIRPATH, PLUGIN_DIRPATH
+from ..constants import CONFIG_DIRPATH, LOG_DIRPATH, PLUGIN_DIRPATH, TEMP_DIRPATH
 from ..helpers import noop
 from ..log import instance as log
 
@@ -22,6 +21,7 @@ def setup_app():
         CONFIG_DIRPATH,
         PLUGIN_DIRPATH,
         LOG_DIRPATH,
+        TEMP_DIRPATH,
     ):
         if not required_dirpath.is_dir():
             log.info(f"Creating required directory at {required_dirpath!s}")

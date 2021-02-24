@@ -6,13 +6,33 @@
 
 from contextlib import contextmanager
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import IO, Generator, Tuple
 
 from bs4 import BeautifulSoup
 from requests import Session
 
 from .constants import TEMP_DIRPATH
+from .log import instance as log
+
+
+class noop_class:
+    """Noop class that allows for everything but does nothing."""
+
+    def __init__(*args, **kwargs):
+        """Noop class initialization (does nothing)."""
+
+        pass
+
+    def __call__(self, *args, **kwargs):
+        """Noop class call (returns itself)."""
+
+        return self
+
+    def __getattr__(self, *args, **kwargs):
+        """Noop getter (returns itself)."""
+
+        return self
 
 
 def noop(*args, **kwargs) -> None:
@@ -61,7 +81,31 @@ def temporary_file(
         mode=mode,
         dir=dirpath,
     ) as temp_handle:
+        log.debug(f"Creating temporary file at {temp_handle.name}")
         yield Path(temp_handle.name), temp_handle
+
+
+@contextmanager
+def temporary_directory(
+    prefix: str, dirpath: Path = TEMP_DIRPATH
+) -> Generator[Path, None, None]:
+    """Context manager for creating a temporary directory at the appropriate location.
+
+    Args:
+        prefix (str):
+            The prefix of the temporary directory.
+        dirpath (Path, optional):
+            The directory path the temporary directory should be created in.
+            Defaults to ``TEMP_DIRPATH``.
+
+    Yields:
+        ~pathlib.Path:
+            The temporary directory's path.
+    """
+
+    with TemporaryDirectory(prefix=prefix, dir=dirpath) as temp_dir:
+        log.debug(f"Creating temporary directory at {temp_dir}")
+        yield Path(temp_dir)
 
 
 def get_soup(markup: str) -> BeautifulSoup:

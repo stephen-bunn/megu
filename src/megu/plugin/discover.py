@@ -12,7 +12,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Generator, List, Tuple, Type
 
-from ..constants import APP_NAME
+from ..constants import APP_NAME, PLUGIN_DIRPATH
 from ..exceptions import PluginFailure
 from ..log import instance as log
 from .base import BasePlugin
@@ -79,13 +79,13 @@ def load_plugin_module(module_name: str) -> ModuleType:
 
 
 def discover_plugins(
-    plugin_dirpath: Path, plugin_type: Type = BasePlugin
+    package_dirpath: Path, plugin_type: Type = BasePlugin
 ) -> Generator[Tuple[str, List[BasePlugin]], None, None]:
     """Discover and load plugins from a given directory of plugin modules.
 
     Args:
-        plugin_dirpath (:class:`pathlib.Path`):
-            The path of the directory to look for plugins in
+        package_dirpath (:class:`pathlib.Path`):
+            The path of the directory to look for plugins in.
         plugin_type (Type, optional):
             The type of plugin to filter for and attempt to load.
             Defaults to :class:`~.plugin.base.BasePlugin`
@@ -100,21 +100,21 @@ def discover_plugins(
             plugin module
     """
 
-    plugin_dirpath = plugin_dirpath.expanduser().absolute()
-    plugin_dir = plugin_dirpath.as_posix()
+    package_dirpath = package_dirpath.expanduser().absolute()
+    package_dir = package_dirpath.as_posix()
 
-    if plugin_dir not in sys.path:
-        log.debug(f"Inserting plugin directory {plugin_dir!r} into the Python path")
-        sys.path.insert(0, plugin_dir)
+    if package_dir not in sys.path:
+        log.debug(f"Inserting package directory {package_dir!r} into the Python path")
+        sys.path.insert(0, package_dir)
 
     plugin_prefix = f"{APP_NAME!s}_"
 
-    log.info(f"Discovering plugins in {plugin_dir!r}")
-    for _, plugin_name, _ in pkgutil.iter_modules([plugin_dir]):
+    log.info(f"Discovering plugins in {package_dir!r}")
+    for _, plugin_name, _ in pkgutil.iter_modules([package_dir]):
         # filter out modules that are not prefixed with the application name
         if not plugin_name.startswith(plugin_prefix):
             log.warning(
-                f"Module {plugin_name!r} in {plugin_dir!r} does not use plugin prefix "
+                f"Module {plugin_name!r} in {package_dir!r} does not use plugin prefix "
                 f"{plugin_prefix!r}, skipping"
             )
             continue
@@ -147,3 +147,27 @@ def discover_plugins(
             continue
 
         yield (plugin_name, plugins)
+
+
+def iter_available_plugins(
+    plugin_dirpath: Path = PLUGIN_DIRPATH,
+    plugin_type: Type = BasePlugin,
+) -> Generator[Tuple[str, List[BasePlugin]], None, None]:
+    """Get all available plugins from the given plugin directory.
+
+    Args:
+        plugin_dirpath (~pathlib.Path, optional):
+            The path to the directory where plugins are installed.
+            Defaults to ``PLUGIN_DIRPATH``.
+        plugin_type (Type, optional):
+            The type of plugins to load.
+            Defaults to :class:`~.plugin.base.BasePlugin`.
+
+    Yields:
+        Tuple[str, List[:class:`~.plugin.base.BasePlugin`]]:
+            A tuple of the plugin name and the instances of exported plugins from
+            available plugin modules.
+    """
+
+    for dirpath in filter(lambda d: d.is_dir(), plugin_dirpath.iterdir()):
+        yield from discover_plugins(package_dirpath=dirpath, plugin_type=plugin_type)

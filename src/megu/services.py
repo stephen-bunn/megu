@@ -14,7 +14,7 @@ from .download.http import HttpDownloader
 from .helpers import temporary_file
 from .log import instance as log
 from .models import Content, Manifest, Url
-from .plugin import BasePlugin, discover_plugins
+from .plugin import BasePlugin, iter_available_plugins
 from .plugin.generic import GenericPlugin
 
 
@@ -64,7 +64,7 @@ def get_plugin(
         f"Determining which plugin from {dirpath.as_posix()!r} can handle "
         f"URL {url.url!r}"
     )
-    for plugin_name, plugins in discover_plugins(plugin_dirpath=dirpath):
+    for plugin_name, plugins in iter_available_plugins(plugin_dirpath=dirpath):
         for plugin in plugins:
             with log.contextualize(plugin_name=plugin_name, plugin=plugin):
                 if url.netloc not in plugin.domains:

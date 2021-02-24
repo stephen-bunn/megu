@@ -5,6 +5,6 @@
 """Contains logic for producing and loading plugins for the project."""
 
 from .base import BasePlugin
-from .discover import discover_plugins
+from .discover import iter_available_plugins
 
-__all__ = ["BasePlugin", "discover_plugins"]
+__all__ = ["BasePlugin", "iter_available_plugins"]
