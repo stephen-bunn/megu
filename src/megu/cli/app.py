@@ -9,7 +9,6 @@ from pathlib import Path
 import typer
 from chalky import configure as configure_chalky
 from chalky.shortcuts import sty
-from tqdm import tqdm
 
 from ..filters import best_content
 from ..hasher import HashType, hash_file
@@ -19,6 +18,7 @@ from ..plugin.generic import GenericPlugin
 from ..services import get_downloader, get_plugin, merge_manifest, normalize_url
 from .plugin import plugin_app
 from .style import Colors, Symbols
+from .ui import build_progress
 from .utils import get_echo, is_debug_context, setup_app
 
 LOG_VERBOSITY_LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
@@ -33,6 +33,7 @@ def main(
     ctx: typer.Context,
     color: bool = typer.Option(default=True, help="Enable color output."),
     debug: bool = typer.Option(default=False, help="Enable debug logging."),
+    progress: bool = typer.Option(default=True, help="Enable progress reports."),
     verbosity: int = typer.Option(
         0,
         "--verbose",
@@ -92,19 +93,19 @@ def get(
 
     # discover the appropriate content to download
     for content in best_content(plugin.extract_content(url)):
-        with tqdm(
+        with build_progress(
+            ctx,
+            report=False,
             total=content.size,
-            desc=f"  {Colors.info | content.filename}  {Symbols.right_arrow}",
-            bar_format="{desc}  {percentage:0.1f}%",
-            disable=is_debug_context(ctx),
+            desc=f"  {Colors.info | content.filename} {Symbols.right_arrow}",
+            bar_format="{desc} {percentage:0.1f}%",
         ) as progress:
-
             # verify content file doesn't already exist
             to_path = Path(to_dir, content.filename).expanduser().absolute()
             if to_path.exists():
                 # if no checksums are defined, let's assume the file is valid
                 if len(content.checksums) <= 0:
-                    progress.bar_format = "{desc}  " + (
+                    progress.bar_format = "{desc} " + (
                         Colors.error | f"{to_path.as_posix()} exists"
                     )
                     continue
@@ -113,7 +114,7 @@ def get(
                 first_checksum = content.checksums[0]
                 hash_type = HashType(first_checksum.type)
                 if hash_file(to_path, {hash_type})[hash_type] == first_checksum.hash:
-                    progress.bar_format = "{desc}  " + (
+                    progress.bar_format = "{desc} " + (
                         Colors.error | f"{to_path.as_posix()} exists"
                     )
                     continue
@@ -122,4 +123,4 @@ def get(
             downloader = get_downloader(content)
             manifest = downloader.download_content(content, update_hook=progress.update)
             final_path = merge_manifest(plugin, manifest, to_path)
-            progress.bar_format = f"{{desc}}  {Colors.success | final_path.as_posix()}"
+            progress.bar_format = f"{{desc}} {Colors.success | final_path.as_posix()}"

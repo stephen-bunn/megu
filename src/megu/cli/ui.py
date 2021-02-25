@@ -4,10 +4,12 @@
 
 """Contains utilities specific to the CLI ui and displaying content consistently."""
 
+import sys
 from contextlib import contextmanager
 from typing import List, Optional
 
 import typer
+from tqdm import tqdm
 from yaspin import yaspin
 from yaspin.core import Yaspin
 
@@ -15,7 +17,69 @@ from megu.plugin.base import BasePlugin
 
 from ..helpers import noop_class
 from .style import Colors, Symbols
-from .utils import get_echo, is_debug_context
+from .utils import get_echo, is_debug_context, is_progress_context
+
+
+@contextmanager
+def build_progress(
+    ctx: typer.Context,
+    *args,
+    report: bool = True,
+    reraise: bool = True,
+    success_message: Optional[str] = None,
+    error_message: Optional[str] = None,
+    **kwargs,
+) -> tqdm:
+    """Builda progress bar for the CLI to use.
+
+    Args:
+        ctx (typer.Context):
+            The context of teh current Typer instance.
+        report (bool, optional):
+            If True, will report success and failures automatically.
+            Defaults to True.
+        reraise (bool, optional):
+            If True, will reraise any exceptions after failing gracefully.
+            Defaults to True.
+        success_message (Optional[str], optional):
+            The default message when the context is exited successfully.
+            Defaults to None.
+        error_message (Optional[str], optional):
+            The default message when the context is exited from a failure.
+            Defaults to None.
+
+    Raises:
+        Exception:
+            Will reraise any exception if ``reraise`` is set to ``True``.
+
+    Returns:
+        ~tqdm.tqdm:
+            A :mod:`tqdm` progress bar instance.
+    """
+
+    # we control if the progress bar is disabled through the context
+    kwargs.pop("disable", None)
+
+    with tqdm(
+        *args,
+        disable=(is_debug_context(ctx) or (not is_progress_context(ctx))),
+        **kwargs,
+    ) as progress:
+        try:
+            yield progress
+            if report:
+                if success_message is None:
+                    success_message = Symbols.success
+                progress.bar_format = f"{{desc}} {Colors.success | success_message}"
+        except Exception as exc:
+            if report:
+                if error_message is None:
+                    error_message = f"{Symbols.error!s} {exc!s}"
+                progress.bar_format = f"{{desc}} {Colors.error | error_message}"
+            if reraise:
+                raise exc
+        finally:
+            progress.close()
 
 
 @contextmanager
@@ -24,8 +88,8 @@ def build_spinner(
     *args,
     report: bool = True,
     reraise: bool = True,
-    success_msg: Optional[str] = None,
-    error_msg: Optional[str] = None,
+    success_message: Optional[str] = None,
+    error_message: Optional[str] = None,
     **kwargs,
 ) -> Yaspin:
     """Build a spinner for the CLI to use.
@@ -39,10 +103,10 @@ def build_spinner(
         reraise (bool, optional):
             If True, will reraise any exceptions after failing gracefully.
             Defaults to True.
-        success_msg (Optional[str], optional):
+        success_message (Optional[str], optional):
             The default message when the context is exited successfully.
             Defaults to None.
-        error_msg (Optional[str], optional):
+        error_message (Optional[str], optional):
             The default message when the context is exited from a failure.
             Defaults to None.
 
@@ -61,16 +125,25 @@ def build_spinner(
 
     spinner = yaspin(*args, **kwargs)
     try:
-        spinner.start()
+        if is_progress_context(ctx):
+            spinner.start()
+        else:
+            progress_text = kwargs.get("text") or (args[0] if len(args) > 0 else None)
+            if progress_text is not None:
+                sys.stdout.write(progress_text)
+                sys.stdout.flush()
+
         yield spinner
         if report:
-            if success_msg is None:
-                success_msg = Symbols.success
-            spinner.ok(Colors.success | success_msg)
+            if success_message is None:
+                success_message = Symbols.success
+
+            spinner.ok(Colors.success | success_message)
     except Exception as exc:
-        if error_msg is None:
-            error_msg = f"{Symbols.error!s} {exc!s}"
-        spinner.fail(Colors.error | error_msg)
+        if error_message is None:
+            error_message = f"{Symbols.error!s} {exc!s}"
+
+        spinner.fail(Colors.error | error_message)
         if reraise:
             raise exc
     finally:
@@ -110,4 +183,4 @@ def display_plugin(ctx: typer.Context, package_name: str, plugins: List[BasePlug
     echo = get_echo(ctx, nl=True)
     echo(f"{Colors.success | package_name}")
     for plugin in plugins:
-        echo(f"  {Symbols.right_arrow}  {format_plugin(plugin)}")
+        echo(f"  {Symbols.right_arrow} {format_plugin(plugin)}")

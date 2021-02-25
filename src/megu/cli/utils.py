@@ -28,6 +28,29 @@ def setup_app():
             required_dirpath.mkdir(mode=0o777)
 
 
+def _get_root_context(ctx: typer.Context) -> typer.Context:
+    """Get the very root context instance.
+
+    Args:
+        ctx (~typer.Context):
+            The provided (potentially nested) context instance.
+
+    Returns:
+        ~typer.Context:
+            The root context instance.
+    """
+
+    if ctx.parent is None:
+        return ctx
+
+    context = ctx.parent
+    while hasattr(context, "parent") and context.parent is not None:
+        context = context.parent
+
+    # this is "technically" a click Context
+    return context  # type: ignore
+
+
 def is_debug_context(ctx: typer.Context) -> bool:
     """Determine if the current context is marked for extra debugging.
 
@@ -40,14 +63,24 @@ def is_debug_context(ctx: typer.Context) -> bool:
             True if the parent context is marked for debug output, otherwise False.
     """
 
-    if ctx.parent is None:
-        return False
-
-    context = ctx.parent
-    while hasattr(context, "parent") and context.parent is not None:
-        context = context.parent
-
+    context = _get_root_context(ctx)
     return context.params.get("debug", False) or context.params.get("verbose", 0) > 0
+
+
+def is_progress_context(ctx: typer.Context) -> bool:
+    """Determine if the current context is marked for progress reporting.
+
+    Args:
+        ctx (typer.Context):
+            The current commands context instance.
+
+    Returns:
+        bool:
+            True if the parent context is marked for progress reporting, otherwise False.
+    """
+
+    context = _get_root_context(ctx)
+    return context.params.get("progress", False)
 
 
 def get_echo(ctx: typer.Context, nl: bool = False) -> Callable[[str], Any]:
