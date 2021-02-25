@@ -8,14 +8,15 @@ import sys
 from contextlib import contextmanager
 from typing import List, Optional
 
+import humanfriendly
 import typer
 from tqdm import tqdm
 from yaspin import yaspin
 from yaspin.core import Yaspin
 
-from megu.plugin.base import BasePlugin
-
 from ..helpers import noop_class
+from ..models import Content
+from ..plugin import BasePlugin
 from .style import Colors, Symbols
 from .utils import get_echo, is_debug_context, is_progress_context
 
@@ -184,3 +185,21 @@ def display_plugin(ctx: typer.Context, package_name: str, plugins: List[BasePlug
     echo(f"{Colors.success | package_name}")
     for plugin in plugins:
         echo(f"  {Symbols.right_arrow} {format_plugin(plugin)}")
+
+
+def format_content(content: Content) -> str:
+    """Format the given content as a user-friendly display string.
+
+    Args:
+        content (~models.Content):
+            The content to format.
+
+    Returns:
+        str:
+            The user-friendly display string for the given content.
+    """
+
+    formatted_size = humanfriendly.format_size(content.size)
+    return (Colors.info | content.id) + (
+        Colors.debug | f" {content.quality} {formatted_size} ({content.type})"
+    )

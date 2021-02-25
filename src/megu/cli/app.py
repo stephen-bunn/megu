@@ -4,6 +4,7 @@
 
 """The main module for the CLI app."""
 
+from itertools import groupby
 from pathlib import Path
 
 import typer
@@ -18,8 +19,8 @@ from ..plugin.generic import GenericPlugin
 from ..services import get_downloader, get_plugin, merge_manifest, normalize_url
 from .plugin import plugin_app
 from .style import Colors, Symbols
-from .ui import build_progress
-from .utils import get_echo, is_debug_context, setup_app
+from .ui import build_progress, format_content
+from .utils import get_echo, setup_app
 
 LOG_VERBOSITY_LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
 DEFAULT_DOWNLOAD_DIRPATH = Path.home().joinpath("Downloads")
@@ -124,3 +125,34 @@ def get(
             manifest = downloader.download_content(content, update_hook=progress.update)
             final_path = merge_manifest(plugin, manifest, to_path)
             progress.bar_format = f"{{desc}} {Colors.success | final_path.as_posix()}"
+
+
+@app.command("show")
+@log.catch()
+def show(
+    ctx: typer.Context,
+    from_url: str = typer.Argument(..., metavar="URL"),
+):
+    """Show what content is extracted from a URL."""
+
+    url = normalize_url(from_url)
+
+    echo = get_echo(ctx)
+    echo(f"{sty.bold | 'Show'} {Colors.info | url.url}\n")
+
+    # discover the appropriate plugin for the URL
+    plugin = get_plugin(url)
+    plugin_color = (
+        Colors.warning if isinstance(plugin, GenericPlugin) else Colors.success
+    )
+    echo(
+        f"Using plugin {plugin_color | plugin.name} "
+        f"{Colors.debug | plugin.domains}\n\n"
+    )
+
+    for content_id, content in groupby(plugin.extract_content(url), lambda c: c.id):
+        echo(f"{Colors.success | content_id}\n")
+        for entry in content:
+            echo(f"  {format_content(entry)}\n")
+
+        echo("\n")
