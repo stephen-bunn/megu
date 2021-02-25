@@ -122,6 +122,7 @@ def add_plugin(
             "-m",
             "pip",
             "install",
+            "--upgrade",
             package,
             "--target",
             temp_dirpath.as_posix(),

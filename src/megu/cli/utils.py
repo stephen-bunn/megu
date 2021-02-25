@@ -60,7 +60,7 @@ def is_debug_context(ctx: typer.Context) -> bool:
 
     Returns:
         bool:
-            True if the parent context is marked for debug output, otherwise False.
+            True if the context is marked for debug output, otherwise False.
     """
 
     context = _get_root_context(ctx)
@@ -76,11 +76,11 @@ def is_progress_context(ctx: typer.Context) -> bool:
 
     Returns:
         bool:
-            True if the parent context is marked for progress reporting, otherwise False.
+            True if the context is marked for progress reporting, otherwise False.
     """
 
     context = _get_root_context(ctx)
-    return context.params.get("progress", False)
+    return context.params.get("progress", True)
 
 
 def get_echo(ctx: typer.Context, nl: bool = False) -> Callable[[str], Any]:

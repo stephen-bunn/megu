@@ -34,7 +34,6 @@ def main(
     ctx: typer.Context,
     color: bool = typer.Option(default=True, help="Enable color output."),
     debug: bool = typer.Option(default=False, help="Enable debug logging."),
-    progress: bool = typer.Option(default=True, help="Enable progress reports."),
     verbosity: int = typer.Option(
         0,
         "--verbose",

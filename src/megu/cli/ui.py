@@ -63,7 +63,7 @@ def build_progress(
 
     with tqdm(
         *args,
-        disable=(is_debug_context(ctx) or (not is_progress_context(ctx))),
+        disable=is_debug_context(ctx),
         **kwargs,
     ) as progress:
         try:
