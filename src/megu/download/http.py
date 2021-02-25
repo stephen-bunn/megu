@@ -217,11 +217,15 @@ class HttpDownloader(BaseDownloader):
                     update_hook(len(chunk))
 
         # handle iteration over paginated resource using Range header
-        for start, end in self._iter_ranges(
+        range_iterator = self._iter_ranges(
             int(range_groups["start"]),
             int(range_groups["end"]),
-            size=total_size,
-        ):
+            size=total_size
+        )
+        # skip first iteration of ranges since we already handled the original
+        # response from download_resource
+        next(range_iterator)
+        for start, end in range_iterator:
             range_header = f"{range_groups.get('unit')!s}={start!s}-{end!s}"
             # produce the next resource according to the provided first range
             log.debug(f"Building next resource of {resource} for range {range_header}")
