@@ -4,13 +4,15 @@
 
 """Contains logic for handling HTTP downloads."""
 
+import re
 import warnings
 from concurrent.futures import Future, ThreadPoolExecutor, as_completed
+from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 
 from cached_property import cached_property
-from requests import Session
+from requests import Response, Session
 
 from ..constants import STAGING_DIRPATH
 from ..log import instance as log
@@ -18,8 +20,12 @@ from ..models import Content, HttpResource
 from ..models.content import Manifest, Resource
 from .base import BaseDownloader
 
-DEFAULT_CHUNK_SIZE = 2 ** 12
-DEFAULT_MAX_CONNECTIONS = 8
+DEFAULT_CHUNK_SIZE: int = 2 ** 12
+DEFAULT_MAX_CONNECTIONS: int = 8
+
+CONTENT_RANGE_PATTERN = re.compile(
+    r"^(?P<unit>.*)\s+(?:(?:(?P<start>\d+)-(?P<end>\d+))|\*)\/(?P<size>\d+|\*)$"
+)
 
 
 class HttpDownloader(BaseDownloader):
@@ -45,7 +51,7 @@ class HttpDownloader(BaseDownloader):
         """Check if some given content can be handled by the HTTP downloader.
 
         Args:
-            content (:class:`~.types.Content`):
+            content (~models.Content):
                 The content to check against the current content.
 
         Returns:
@@ -55,6 +61,203 @@ class HttpDownloader(BaseDownloader):
 
         return all(isinstance(resource, HttpResource) for resource in content.resources)
 
+    def _request_resource(
+        self, resource: HttpResource, stream: bool = True
+    ) -> Response:
+        """Request a response for a given HTTP resource.
+
+        Args:
+            resource (~models.HttpResource):
+                The HTTP resource to request.
+            stream (bool, optional):
+                If True, will open a response stream rather than attempting to fetch
+                the full content.
+                Defaults to True.
+
+        Returns:
+            requests.Response: The response for the given resource.
+        """
+
+        log.info(f"Sending request for resource {resource}")
+        return self.session.send(resource.to_request(), stream=stream)
+
+    def _download_normal(
+        self,
+        resource: HttpResource,
+        response: Response,
+        to_path: Path,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        update_hook: Optional[Callable[[int], Any]] = None,
+    ) -> Path:
+        """Handle downloading a normal response for a given HTTP resource.
+
+        Args:
+            resource (HttpResource):
+                The resource that resulted in an OK response.
+            response (Response):
+                The OK response.
+            to_path (Path):
+                The path the content of the resource should be downloaded to.
+            chunk_size (int, optional):
+                The size in bytes to stream chunks of data from the server.
+                Defaults to ``DEFAULT_CHUNK_SIZE``.
+            update_hook (Optional[Callable[[int], Any]], optional):
+                A progress update hook to write the downloaded length of content to.
+                Defaults to None.
+
+        Returns:
+            ~pathlib.Path:
+                The path the resource was downloaded to (should be ``to_path``)
+        """
+
+        if "content-length" in response.headers:
+            total_size = int(response.headers["content-length"])
+            self.allocate_storage(to_path, total_size)
+
+        with to_path.open("wb") as file_handle:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                file_handle.write(chunk)
+
+                if update_hook is not None:
+                    update_hook(len(chunk))
+
+        return to_path
+
+    def _download_partial(
+        self,
+        resource: HttpResource,
+        response: Response,
+        to_path: Path,
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        update_hook: Optional[Callable[[int], Any]] = None,
+    ) -> Path:
+        """Handle downloading a partial response for a given HTTP resource.
+
+        Args:
+            resource (~models.http.HttpResource):
+                The resource that resulted in a partial response.
+            response (requests.Response):
+                The partial response.
+            to_path (~pathlib.Path):
+                The path the content of the resource should be downloaded to.
+            chunk_size (int, optional):
+                The size in bytes to stream chunks of data from the server.
+                Defaults to ``DEFAULT_CHUNK_SIZE``.
+            update_hook (Optional[Callable[[int], Any]], optional):
+                A progress update hook to write the downloaded length of content.
+                Defaults to None.
+
+        Raises:
+            ValueError:
+                When the downloading of the partial resource fails for any reason.
+
+        Returns:
+            Path:
+                The path the resource was downloaded to (should be ``to_path``).
+        """
+
+        # in the worst case scenarios where the partial request is not formatted
+        # according to the HTTP 206 RFC, we can attempt to fallback to the
+        # standard HTTP 200 downloader callable
+        fallback_download = partial(
+            self._download_normal,
+            response,
+            to_path,
+            chunk_size=chunk_size,
+            update_hook=update_hook,
+        )
+
+        if "content-range" not in response.headers:
+            # if we don't have a content-range we are kinda screwed
+            # let's just try and handle it with the normal downloader instead
+            log.warning(
+                "Partial response has no Content-Range header, "
+                "falling back to normal HTTP download handler"
+            )
+            return fallback_download()
+
+        range_match = CONTENT_RANGE_PATTERN.match(
+            response.headers["content-range"].strip()
+        )
+        if not range_match:
+            # when we fail to parse content-range as defined by the RFC, might as well
+            # fallback to the normal downloader
+            log.warning(
+                "Partial response has invalid Content-Range header, "
+                "falling back to normal HTTP download handler"
+            )
+            return fallback_download()
+
+        range_groups = range_match.groupdict()
+        if "start" not in range_groups or "end" not in range_groups:
+            # without start-end range, we can't paginate over the data properly
+            # let's see if the normal downloader can deal with it
+            log.warning(
+                "Partial response has no valid ranges in the Content-Range header, "
+                "falling back to normal HTTP download handler"
+            )
+            return fallback_download()
+
+        range_size = range_groups.get("size")
+        total_size = (
+            int(range_size)
+            if range_size is not None and range_size not in ("", "*")
+            else None
+        )
+        if total_size is not None:
+            total_size = int(total_size)
+            self.allocate_storage(to_path, total_size)
+
+        # handle the first response
+        with to_path.open("wb") as file_handle:
+            for chunk in response.iter_content(chunk_size=chunk_size):
+                file_handle.write(chunk)
+
+                if update_hook is not None:
+                    update_hook(len(chunk))
+
+        # handle iteration over paginated resource using Range header
+        for start, end in self._iter_ranges(
+            int(range_groups["start"]),
+            int(range_groups["end"]),
+            size=total_size,
+        ):
+            range_header = f"{range_groups.get('unit')!s}={start!s}-{end!s}"
+            # produce the next resource according to the provided first range
+            log.debug(f"Building next resource of {resource} for range {range_header}")
+            next_resource = resource.copy()
+            next_resource.headers.update({"Range": range_header})
+
+            next_response = self._request_resource(next_resource)
+            if not next_response.ok:
+                # if we have not defined a total size (meaning the range generator will
+                # loop forever), and the response comes back as a failed range spec,
+                # it is likely safe to assume the range generator reached the end
+                # of the content
+                if total_size is not None and next_response.status_code in (416,):
+                    log.warning(
+                        f"Encountered failed response {next_response} but total size "
+                        "of content was not specified, assuming content was "
+                        "fetched properly"
+                    )
+                    return to_path
+
+                raise ValueError(
+                    f"Response for resource {next_resource} resolved to error "
+                    f"status code {next_response.status_code}"
+                )
+
+            # we are appending to the pre-existing file
+            # make sure to not overwrite the pre-existing content
+            with to_path.open("ab") as file_handle:
+                for chunk in next_response.iter_content(chunk_size=chunk_size):
+                    file_handle.write(chunk)
+
+                    if update_hook is not None:
+                        update_hook(len(chunk))
+
+        return to_path
+
     def download_resource(
         self,
         resource: HttpResource,
@@ -62,11 +265,11 @@ class HttpDownloader(BaseDownloader):
         to_path: Path,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         update_hook: Optional[Callable[[int], Any]] = None,
-    ) -> Tuple[int, Resource, Path]:
+    ) -> Tuple[int, HttpResource, Path]:
         """Download some resource to a specific filepath.
 
         Args:
-            request (~types.HTTPResource):
+            request (~models.HTTPResource):
                 The resource to download.
             to_path (:class:`pathlib.Path`):
                 The filepath to download the resource to.
@@ -77,41 +280,101 @@ class HttpDownloader(BaseDownloader):
                 Callable for reporting downloaded chunk sizes.
                 Defaults to None.
 
+        Raises:
+            ValueError:
+                When attempting to download the resource fails for any reason.
+
         Returns:
-            :class:`pathlib.Path`:
-                The path the resource was downloaded to.
+            Tuple[int, ~models.HttpResource, ~pathlib.Path]
+                A tuple containing the index, the resource, and the path the resource
+                was downloaded to.
         """
 
+        status_handlers = {200: self._download_normal, 206: self._download_partial}
         with log.contextualize(resource=resource):
-            log.debug(f"Making request for resource {resource.fingerprint!r}")
-            response = self.session.send(resource.to_request(), stream=True)
-            log.success(
-                f"Resource {resource.fingerprint!r} resolved to status "
-                f"{response.status_code!r}"
+            response = self._request_resource(resource)
+            log.debug(
+                f"Resource {resource.fingerprint} resolved to status "
+                f"{response.status_code}"
             )
 
-            total_size = int(response.headers["Content-Length"])
-            self.allocate_storage(to_path, total_size)
-
-            with to_path.open("wb") as file_handle:
-                log.info(
-                    f"Downloading content of length {total_size!s} from {response!r} "
-                    f"in chunks of {chunk_size!s} bytes"
+            if not response.ok:
+                raise ValueError(
+                    f"Response for resource {resource} resolved to error status code "
+                    f"{response.status_code}"
+                )
+            elif response.status_code == 204:
+                raise ValueError(f"Response for resource {resource} has no content")
+            elif response.status_code in status_handlers:
+                download_handler = status_handlers.get(
+                    response.status_code,
+                    self._download_normal,
+                )
+                downloaded_path = download_handler(
+                    resource,
+                    response,
+                    to_path,
+                    chunk_size=chunk_size,
+                    update_hook=update_hook,
+                )
+                return (resource_index, resource, downloaded_path)
+            else:
+                raise ValueError(
+                    f"Response for resource {resource} resolved to "
+                    f"unhandled status code {response.status_code}"
                 )
 
-                for chunk in response.iter_content(chunk_size=chunk_size):
-                    file_handle.write(chunk)
+    def _iter_ranges(
+        self,
+        start: int,
+        end: int,
+        size: Optional[int] = None,
+        chunk_size: Optional[int] = None,
+    ) -> Generator[Tuple[int, int], None, None]:
+        """Iterate over ranges to make building partial requests easier.
 
-                    if update_hook is not None:
-                        update_hook(len(chunk))
+        .. important::
+            If no ``size`` argument is provided. This generator will **never** exit
+            and it is up to the consumer to forcibly break out of the loop.
 
-        return (resource_index, resource, to_path)
+        Args:
+            start (int):
+                The starting range of the request (typically should be set to 0).
+            end (int):
+                The ending range of the first request.
+            size (Optional[int], optional):
+                The full size of the data being requested, if available.
+                Defaults to None.
+            chunk_size (Optional[int], optional):
+                The custom chunk-size to use for the generated ranges.
+                Defaults to None.
+
+        Yields:
+            Tuple[int, int]:
+                The appropriate (start, end) given the conditions.
+        """
+
+        def _loop_condition(end: int, size: Optional[int]) -> bool:
+            return end <= size if size is not None else True
+
+        while _loop_condition(end, size):
+            if start >= end:
+                break
+
+            yield start, end
+            next_end = end + (chunk_size if chunk_size else ((end - start) + 1))
+            # cap last range end at full size, if size provided
+            if size is not None and next_end > size:
+                next_end = size
+
+            start = end + 1
+            end = next_end
 
     def _get_content_size(self, content: Content) -> int:
         """Get the full byte size of the given content.
 
         Args:
-            content (~.types.Content):
+            content (~models.Content):
                 The content to get the byte size of.
 
         Returns:
@@ -143,7 +406,7 @@ class HttpDownloader(BaseDownloader):
         """Download the resource of some content to temporary storage.
 
         Args:
-            content (~.types.Content):
+            content (~models.Content):
                 The content to download.
             max_connections (int, optional):
                 The limit of connections to make to handle downloading the content.
