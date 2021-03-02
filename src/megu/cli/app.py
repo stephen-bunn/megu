@@ -36,6 +36,7 @@ app.add_typer(plugin_app, name="plugin")
 
 
 @app.callback()
+@log.catch()
 def main(
     ctx: typer.Context,
     color: bool = typer.Option(default=True, help="Enable color output."),
