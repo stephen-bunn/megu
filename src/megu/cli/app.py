@@ -25,7 +25,7 @@ from .utils import get_echo, setup_app
 LOG_VERBOSITY_LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
 DEFAULT_DOWNLOAD_DIRPATH = Path.home().joinpath("Downloads")
 
-app = typer.Typer()
+app = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
 app.add_typer(plugin_app, name="plugin")
 
 
