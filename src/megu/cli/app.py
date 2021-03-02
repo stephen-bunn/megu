@@ -151,7 +151,7 @@ def show(
 
     for content_id, content in groupby(plugin.extract_content(url), lambda c: c.id):
         echo(f"{Colors.success | content_id}\n")
-        for entry in content:
+        for entry in sorted(content, key=lambda c: c.quality, reverse=True):
             echo(f"  {format_content(entry)}\n")
 
         echo("\n")

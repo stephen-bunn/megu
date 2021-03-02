@@ -99,6 +99,9 @@ vprof = { version = "^0.38", optional = true }
 [tool.poetry.extras]
 profile = ["pyprof2calltree", "vprof"]
 
+[tool.poetry.scripts]
+megu = "megu.cli:app"
+
 [tool.black]
 line-length = 88
 target_version = ['py37']
