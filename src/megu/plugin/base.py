@@ -14,6 +14,19 @@ from ..models import Content, Manifest, Url
 class BasePlugin(abc.ABC):
     """The base plugin that all plugins should inherit from."""
 
+    def __str__(self) -> str:
+        """Build a human-friendly string representation of a plugin.
+
+        Returns:
+            str:
+                The human-friendly string representation of a plugin.
+        """
+
+        return (
+            f"{self.__class__.__qualname__!s}"
+            f"(name={self.name!r}, domains={self.domains!r})"
+        )
+
     @abc.abstractproperty
     def name(self) -> str:
         """Human readable name for the plugin."""

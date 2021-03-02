@@ -297,10 +297,7 @@ class HttpDownloader(BaseDownloader):
         status_handlers = {200: self._download_normal, 206: self._download_partial}
         with log.contextualize(resource=resource):
             response = self._request_resource(resource)
-            log.debug(
-                f"Resource {resource.fingerprint} resolved to status "
-                f"{response.status_code}"
-            )
+            log.debug(f"Resource {resource} resolved to status {response.status_code}")
 
             if not response.ok:
                 raise ValueError(

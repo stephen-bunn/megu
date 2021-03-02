@@ -31,7 +31,7 @@ def build_progress(
     error_message: Optional[str] = None,
     **kwargs,
 ) -> tqdm:
-    """Builda progress bar for the CLI to use.
+    """Build a progress bar for the CLI to use.
 
     Args:
         ctx (typer.Context):
