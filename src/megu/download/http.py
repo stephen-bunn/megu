@@ -220,7 +220,7 @@ class HttpDownloader(BaseDownloader):
         range_iterator = self._iter_ranges(
             int(range_groups["start"]),
             int(range_groups["end"]),
-            size=total_size
+            size=total_size,
         )
         # skip first iteration of ranges since we already handled the original
         # response from download_resource
