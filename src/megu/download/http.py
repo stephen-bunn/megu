@@ -123,7 +123,7 @@ class HttpDownloader(BaseDownloader):
 
         return to_path
 
-    def _download_partial(
+    def _download_partial(  # noqa: C901
         self,
         resource: HttpResource,
         response: Response,
@@ -224,7 +224,18 @@ class HttpDownloader(BaseDownloader):
         )
         # skip first iteration of ranges since we already handled the original
         # response from download_resource
-        next(range_iterator)
+        try:
+            next(range_iterator)
+        except StopIteration:
+            if total_size is not None:
+                log.warning(
+                    f"Encountered failed iteration for given range in {range_groups},"
+                    " assuming content was fetched properly"
+                )
+                return to_path
+
+            raise ValueError(f"Iteration of ranges from {range_groups} failed")
+
         for start, end in range_iterator:
             range_header = f"{range_groups.get('unit')!s}={start!s}-{end!s}"
             # produce the next resource according to the provided first range
@@ -238,7 +249,7 @@ class HttpDownloader(BaseDownloader):
                 # loop forever), and the response comes back as a failed range spec,
                 # it is likely safe to assume the range generator reached the end
                 # of the content
-                if total_size is not None and next_response.status_code in (416,):
+                if total_size is None and next_response.status_code in (416,):
                     log.warning(
                         f"Encountered failed response {next_response} but total size "
                         "of content was not specified, assuming content was "
