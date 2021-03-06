@@ -16,7 +16,13 @@ from ..hasher import HashType, hash_file
 from ..log import configure_logger, get_logger
 from ..log import instance as log
 from ..plugin.generic import GenericPlugin
-from ..services import get_downloader, get_plugin, merge_manifest, normalize_url
+from ..services import (
+    get_downloader,
+    get_plugin,
+    iter_content,
+    merge_manifest,
+    normalize_url,
+)
 from .plugin import plugin_app
 from .style import Colors, Symbols
 from .ui import build_progress, format_content
@@ -25,11 +31,12 @@ from .utils import get_echo, setup_app
 LOG_VERBOSITY_LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
 DEFAULT_DOWNLOAD_DIRPATH = Path.home().joinpath("Downloads")
 
-app = typer.Typer()
+app = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
 app.add_typer(plugin_app, name="plugin")
 
 
 @app.callback()
+@log.catch()
 def main(
     ctx: typer.Context,
     color: bool = typer.Option(default=True, help="Enable color output."),
@@ -92,7 +99,7 @@ def get(
     )
 
     # discover the appropriate content to download
-    for content in best_content(plugin.extract_content(url)):
+    for content in best_content(iter_content(url, plugin)):
         with build_progress(
             ctx,
             report=False,
@@ -149,9 +156,9 @@ def show(
         f"{Colors.debug | plugin.domains}\n\n"
     )
 
-    for content_id, content in groupby(plugin.extract_content(url), lambda c: c.id):
+    for content_id, content in groupby(iter_content(url, plugin), lambda c: c.id):
         echo(f"{Colors.success | content_id}\n")
-        for entry in content:
+        for entry in sorted(content, key=lambda c: c.quality, reverse=True):
             echo(f"  {format_content(entry)}\n")
 
         echo("\n")

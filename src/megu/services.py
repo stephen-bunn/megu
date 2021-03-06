@@ -93,24 +93,26 @@ def get_plugin(
 
 def iter_content(
     url: Union[str, Url],
-    plugin_dirpath: Optional[Path] = None,
+    plugin: BasePlugin,
 ) -> Generator[Content, None, None]:
     """Shortcut to discover and iterate over content for a given URL.
 
     Args:
         url (Union[str, ~models.Url]):
             The URL to discover content for.
-        plugin_dirpath (Optional[~pathlib.Path], optional):
-            The path to the directory of plugins to read through.
-            Defaults to None.
+        plugin (~plugins.BasePlugin):
+            The plugin to use for extracting content.
 
     Yields:
-        Generator[~models.Content, None, None]:
+        ~models.Content:
             The content extracted for the URL by the most suitable available plugin.
     """
 
     url = normalize_url(url)
-    yield from get_plugin(url, plugin_dirpath=plugin_dirpath).extract_content(url)
+    log.info(f"Extracting content from {url} using {plugin}")
+    for content in plugin.extract_content(url):
+        log.info(f"Extracted content {content} from {url} using {plugin}")
+        yield content
 
 
 def get_downloader(content: Content) -> BaseDownloader:
@@ -166,6 +168,9 @@ def merge_manifest(plugin: BasePlugin, manifest: Manifest, to_path: Path) -> Pat
     if to_path.exists():
         raise FileExistsError(f"File at {to_path!s} already exists")
 
+    log.info(
+        f"Merging downloaded artifacts from {manifest} to {to_path} using {plugin}"
+    )
     # manifest artifacts must be merged on the same filesystem, and after,
     # moved to the appropriate output location
     with temporary_file(manifest.content.id, "wb") as (temp_path, _):
