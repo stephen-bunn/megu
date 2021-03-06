@@ -4,16 +4,20 @@
 
 """Contains helper methods that plugins can use to simplify usage."""
 
+import re
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import IO, Generator, Tuple
 
 from bs4 import BeautifulSoup
+from diskcache import Cache
 from requests import Session
 
-from .constants import TEMP_DIRPATH
+from .constants import CACHE_DIRPATH, TEMP_DIRPATH
 from .log import instance as log
+
+DISK_CACHE_PATTERN = re.compile(r"^[a-z]+[a-z0-9_-]{3,31}[a-z0-9]$")
 
 
 class noop_class:
@@ -52,6 +56,56 @@ def http_session() -> Generator[Session, None, None]:
 
     with Session() as session:
         yield session
+
+
+@contextmanager
+def disk_cache(cache_name: str) -> Generator[Cache, None, None]:
+    """Context manager for creating or accessing a local disk cache.
+
+    We recommend that you avoid using a diskcache if at all possible.
+    The feature to define and use a disk-persisted cache was introduced for the purpose
+    of caching fetched API tokens between runs (such as OAuth Bearer tokens).
+    You should **not** be caching content, you should be downloading content.
+
+    .. important::
+        For some relatively naive precautions, we don't allow for path separators or
+        spaces in the cache name.
+        For this purpose, we are enforcing that the name of the cache must match the
+        following pattern: ``^[a-z]+[a-z0-9_-]{3,31}[a-z0-9]$``.
+
+        For this reason, we recommend that you use your plugin's package name as the
+        name for your plugin's disk-persisted cache.
+
+    .. warning::
+        Please be reasonable about what you are caching.
+        No one wants people taking advantage of their disk-space.
+
+    Args:
+        cache_name (str):
+            The name of the cache to create or access.
+
+    Raises:
+        ValueError:
+            If the given ``cache_name`` does not match the approved naming pattern.
+
+    Yields:
+        :class:`~diskcache.Cache`:
+            The diskcache Cache instance.
+    """
+
+    if not DISK_CACHE_PATTERN.match(cache_name):
+        raise ValueError(
+            f"Disk cache name {cache_name!r} violates the required naming pattern "
+            f"{DISK_CACHE_PATTERN.pattern!r}"
+        )
+
+    diskcache_dirpath = CACHE_DIRPATH.joinpath(cache_name)
+    if not diskcache_dirpath.is_dir():
+        log.debug(f"Creating a new diskcache at {diskcache_dirpath}")
+        diskcache_dirpath.mkdir(mode=0o777, parents=True)
+
+    with Cache(diskcache_dirpath.as_posix()) as cache:
+        yield cache
 
 
 @contextmanager

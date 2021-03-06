@@ -7,13 +7,16 @@
 import tempfile
 from pathlib import Path
 
-import typer
+import appdirs
 
 APP_NAME = "megu"
 APP_VERSION = "0.1.0"
 
-CONFIG_DIRPATH = Path(typer.get_app_dir(app_name=APP_NAME)).absolute()
-LOG_DIRPATH = CONFIG_DIRPATH.joinpath("logs")
+app_dirs = appdirs.AppDirs(appname=APP_NAME)
+
+CONFIG_DIRPATH = Path(app_dirs.user_config_dir).absolute()
+CACHE_DIRPATH = Path(app_dirs.user_cache_dir).absolute()
+LOG_DIRPATH = Path(app_dirs.user_log_dir).absolute()
 PLUGIN_DIRPATH = CONFIG_DIRPATH.joinpath("plugins")
 TEMP_DIRPATH = Path(tempfile.gettempdir()).joinpath(APP_NAME)
 STAGING_DIRPATH = TEMP_DIRPATH.joinpath(".staging")

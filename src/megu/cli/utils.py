@@ -11,21 +11,13 @@ import typer
 
 from ..constants import CONFIG_DIRPATH, LOG_DIRPATH, PLUGIN_DIRPATH, TEMP_DIRPATH
 from ..helpers import noop
-from ..log import instance as log
+from ..utils import create_required_directories
 
 
 def setup_app():
     """Handle setting up the application environment on the local machine."""
 
-    for required_dirpath in (
-        CONFIG_DIRPATH,
-        PLUGIN_DIRPATH,
-        LOG_DIRPATH,
-        TEMP_DIRPATH,
-    ):
-        if not required_dirpath.is_dir():
-            log.info(f"Creating required directory at {required_dirpath!s}")
-            required_dirpath.mkdir(mode=0o777)
+    create_required_directories()
 
 
 def _get_root_context(ctx: typer.Context) -> typer.Context:
