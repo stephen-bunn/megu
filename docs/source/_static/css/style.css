@@ -1,0 +1,60 @@
+.Main_Container {
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 2rem;
+}
+
+.Main_Image {
+  width: 30%;
+  height: auto;
+  object-fit: scale-down;
+}
+
+.Main_Content {
+  width: 70%;
+  margin-bottom: 1rem;
+  padding-left: 1rem;
+  text-align: left;
+  align-self: center;
+}
+
+.Main_Title {
+  font-family: Roboto Slab, sans-serif;
+  font-size: 74px;
+  font-weight: 700;
+}
+
+.Main_Description {
+  margin-bottom: 0.5rem;
+}
+
+@media only screen and (max-width: 800px) {
+  .Main_Container {
+    flex-direction: column;
+  }
+
+  .Main_Image {
+    width: 50%;
+    max-height: 200px;
+    align-self: center;
+  }
+
+  .Main_Content {
+    width: 100%;
+    padding-left: 0;
+  }
+
+  .Main_Title {
+    text-align: center;
+  }
+}
+
+.Main_Badges {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.Main_Badges a {
+  margin: 0.25rem;
+}

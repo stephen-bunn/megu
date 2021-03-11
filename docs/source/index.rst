@@ -1,14 +1,34 @@
 .. raw:: html
 
-   <h1 align="center" style="font-size: 64px;">Megu</h1>
-   <p align="center" style="margin: 0px;">
-      <a href="https://pypi.org/project/megu/" target="_blank"><img alt="Supported Versions" src="https://img.shields.io/pypi/pyversions/megu.svg"></a>
-      <a href="https://github.com/ambv/black" target="_blank"><img alt="Code Style: Black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-   </p>
-
-
-Plugin-centric HTTP media extractor and downloader framework.
-
+   <div class="Main_Container">
+      <img class="Main_Image" alt="Megu" src="_static/assets/images/megu-icon.svg"/>
+      <div class="Main_Content">
+         <div class="Main_Title">Megu</div>
+         <div class="Main_Description">
+            A plugin-centric HTTP media extractor and downloader framework.
+         </div>
+         <div class="Main_Badges">
+            <a href="https://pypi.org/project/megu/" target="_blank">
+               <img alt="Supported Versions" src="https://img.shields.io/pypi/pyversions/megu.svg" />
+            </a>
+            <a href="https://pypi.org/project/megu/" target="_blank">
+               <img alt="PyPi Status" src="https://img.shields.io/pypi/status/megu" />
+            </a>
+            <a href="https://github.com/stephen-bunn/megu/" target="_blank">
+               <img alt="License" src="https://img.shields.io/github/license/stephen-bunn/megu">
+            </a>
+            <a href="https://github.com/stephen-bunn/megu/actions?query=workflow%3A%22Test+Package%22" target="_blank">
+               <img alt="Test Status" src="https://img.shields.io/github/workflow/status/stephen-bunn/megu/Test%20Package" />
+            </a>
+            <a href="https://codecov.io/gh/stephen-bunn/megu" target="_blank">
+               <img alt="Coverage" src="https://img.shields.io/codecov/c/github/stephen-bunn/megu?token=xhhZQr8l76" />
+            </a>
+            <a href="https://github.com/ambv/black" target="_blank">
+               <img alt="Code Style: Black" src="https://img.shields.io/badge/code%20style-black-000000.svg" />
+            </a>
+         </div>
+      </div>
+   </div>
 
 **To get started using this package, please see the** :ref:`getting-started` **page!**
 
@@ -20,6 +40,7 @@ User Documentation
 
    getting-started
    contributing
+   code-of-conduct
    changelog
    license
 
