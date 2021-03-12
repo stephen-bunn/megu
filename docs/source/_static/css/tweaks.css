@@ -1,10 +1,5 @@
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: Noto Sans, sans-serif;
+.wy-nav-top {
+  background-color: #743 !important;
 }
 
 .ui.tabular.menu {
@@ -67,16 +62,4 @@ h6 {
 .modal__btn {
   background-color: #151320 !important;
   color: #f8f8f8 !important;
-}
-
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background-color: #3c394e;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: #151320;
 }

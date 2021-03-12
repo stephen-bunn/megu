@@ -20,13 +20,15 @@
 }
 
 .Main_Title {
-  font-family: Roboto Slab, sans-serif;
-  font-size: 74px;
+  font-family: "Crimson Text", sans-serif;
+  font-size: 72px;
   font-weight: 700;
 }
 
 .Main_Description {
   margin-bottom: 0.5rem;
+  font-family: "Crimson Text", sans-serif;
+  font-size: 24px;
 }
 
 @media only screen and (max-width: 800px) {

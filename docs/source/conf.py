@@ -62,8 +62,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     # "sphinx_autodoc_typehints",
-    # "hoverxref.extension",
-    # "sphinx_rtd_theme",
+    "hoverxref.extension",
+    "sphinx_rtd_theme",
 ]
 
 # Autodoc settings
@@ -152,7 +152,7 @@ html_theme_options = {
     "logo_only": True,
     "display_version": True,
     "prev_next_buttons_location": "bottom",
-    "style_nav_header_background": "#151320",
+    "style_nav_header_background": "#774433",
     "collapse_navigation": True,
     "sticky_navigation": True,
     "navigation_depth": 4,
