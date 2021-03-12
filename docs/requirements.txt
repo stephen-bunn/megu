@@ -2,4 +2,19 @@ sphinx>=3.0
 toml
 sphinx-autodoc-typehints
 sphinx-hoverxref
+typer[all]
+loguru
+pydantic
+requests
+furl
+orderedmultidict
+xxhash
+cached-property
+beautifulsoup4
+lxml
+chalky
+yaspin
+humanfriendly
+diskcache
+appdirs
 -e git+https://github.com/stephen-bunn/sphinx_rtd_theme.git@megu#egg=sphinx_rtd_theme
