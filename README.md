@@ -1,8 +1,5 @@
-<link rel="preconnect" href="https://fonts.gstatic.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap" rel="stylesheet">
-<div style="padding: 1rem; margin-bottom: 1rem; display: flex; flex-direction: row;">
-  <img alt="Megu" src="docs/source/_static/assets/images/megu-icon.svg"/>
-  <div style="font-size: 64px; font-family: 'Noto Serif', serif; align-self: center; padding-left: 2rem;">Megu</div>
+<div style="padding: 1rem; margin-bottom: 1rem;">
+  <img alt="Megu" src="docs/source/_static/assets/images/megu.png"/>
 </div>
 
 **Plugin-centric HTTP media extractor and downloader framework.**
