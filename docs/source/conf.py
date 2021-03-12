@@ -67,7 +67,7 @@ extensions = [
 ]
 
 # Autodoc settings
-autodoc_mock_imports = []
+autodoc_mock_imports = ["chalky"]
 
 # Napoleon settings
 napoleon_google_docstring = True

@@ -12,7 +12,6 @@ xxhash
 cached-property
 beautifulsoup4
 lxml
-chalky
 yaspin
 humanfriendly
 diskcache
