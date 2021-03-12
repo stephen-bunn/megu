@@ -1,2 +1,5 @@
 sphinx>=3.0
 toml
+sphinx-autodoc-typehints
+sphinx-hoverxref
+-e git://github.com/stephen-bunn/sphinx_rtd_theme.git@megu#egg=sphinx_rtd_theme

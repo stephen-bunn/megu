@@ -61,7 +61,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
-    # "sphinx_autodoc_typehints",
+    "sphinx_autodoc_typehints",
     "hoverxref.extension",
     "sphinx_rtd_theme",
 ]
@@ -84,7 +84,6 @@ napoleon_use_rtype = True
 napoleon_type_aliases = None
 
 # Autodoc typehints settings
-set_type_checking_flag = True
 typehints_fully_qualified = False
 always_document_param_types = True
 typehints_document_rtype = True
