@@ -39,8 +39,8 @@
 }
 
 .tooltipster-box {
-  background-color: #3c394e !important;
-  box-shadow: 0 0 10px 0 #151320 !important;
+  background-color: #e6d2b8 !important;
+  box-shadow: 0 0 10px 0 #602a21 !important;
 }
 
 .tooltipster-arrow {
@@ -48,18 +48,18 @@
 }
 
 .tooltipster-arrow-border {
-  border-right-color: #3c394e !important;
+  border-right-color: #e6d2b8 !important;
 }
 
 .modal__container {
-  background-color: #3c394e !important;
+  background-color: #e6d2b8 !important;
 }
 
 .modal__close {
-  color: #f8f8f2 !important;
+  color: #602a21 !important;
 }
 
 .modal__btn {
-  background-color: #151320 !important;
-  color: #f8f8f8 !important;
+  background-color: #602a21 !important;
+  color: #fae4c8 !important;
 }
