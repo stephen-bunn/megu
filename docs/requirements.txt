@@ -8,6 +8,7 @@ pydantic
 requests
 furl
 orderedmultidict
+chalky
 xxhash
 cached-property
 beautifulsoup4
