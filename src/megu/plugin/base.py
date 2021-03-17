@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-# Copyright (c) 2020 Stephen Bunn <stephen@bunn.io>
+# Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
 # ISC License <https://choosealicense.com/licenses/isc>
 
 """Contains the abstractions necessary for the plugin discovery to work."""
@@ -11,8 +11,12 @@ from typing import Generator, Set
 from ..models import Content, Manifest, Url
 
 
-class BasePlugin(abc.ABC):
-    """The base plugin that all plugins should inherit from."""
+class BasePlugin(abc.ABC):  # pragma: no cover
+    """The base plugin that all plugins should inherit from.
+
+    This class should mostly be excluded from testing as it should only ever define an
+    interface and not provide much if any implementation.
+    """
 
     def __str__(self) -> str:
         """Build a human-friendly string representation of a plugin.

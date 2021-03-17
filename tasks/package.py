@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-# Copyright (c) 2020 Stephen Bunn <stephen@bunn.io>
+# Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
 # ISC License <https://opensource.org/licenses/isc>
 
 """Contains Invoke task functions for package building and testing."""
