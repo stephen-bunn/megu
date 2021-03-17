@@ -118,6 +118,7 @@ class Content(BaseModel):
     quality: float = Field(
         title="Quality",
         description="The quality ranking of the content from the same URL.",
+        ge=0,
     )
     size: int = Field(
         title="Size",
