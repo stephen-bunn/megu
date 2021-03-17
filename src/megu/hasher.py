@@ -20,6 +20,10 @@ calculating checksums for files >1GB which is safe and **very** fast using xxhas
     <HashType.XXHASH: 'xxhash'>: '59af876b8f4b8998',
     <HashType.MD5: 'md5'>: 'a46062d24103b87560b2dc0887a1d5de'
 }
+
+Attributes:
+    DEFAULT_CHUNK_SIZE (int):
+        The default size in bytes to chunk file streams for hashing.
 """
 
 import hashlib
@@ -106,7 +110,7 @@ def hash_io(
             The set of names for hash types to calculate.
         chunk_size (int):
             The size of bytes to have loaded from the buffer into memory at a time.
-            Defaults to ``DEFAULT_CHUNK_SIZE``.
+            Defaults to :attr:`~DEFAULT_CHUNK_SIZE`.
 
     Raises:
         ValueError:

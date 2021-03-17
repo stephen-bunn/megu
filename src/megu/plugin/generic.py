@@ -31,7 +31,7 @@ class GenericPlugin(BasePlugin):
         """Produce an content id for the provided Url.
 
         Args:
-            url (~models.Url):
+            url (~megu.models.content.Url):
                 The Url instance to build a content id for.
 
         Returns:
@@ -50,11 +50,11 @@ class GenericPlugin(BasePlugin):
         """Check if the plugin can handle the given URL.
 
         Args:
-            url (~models.Url):
+            url (~megu.models.content.Url):
                 The URL to check against the generic plugin.
 
         Returns:
-            Literal[True]:
+            Literal[:data:`True`]:
                 This plugin assumes it can handle any URL,
                 therefore it always returns True.
         """
@@ -69,11 +69,11 @@ class GenericPlugin(BasePlugin):
         of the given Url.
 
         Args:
-            url (~models.Url):
+            url (~megu.models.content.Url):
                 The URL to extract content from.
 
         Yields:
-            Generator[~models.Content, None, None]:
+            Generator[:class:`~megu.models.content.Content`, None, None]:
                 The extracted content from the given Url instance.
         """
 
@@ -94,7 +94,7 @@ class GenericPlugin(BasePlugin):
         """Merge the given manifest artifacts into a single filepath.
 
         Args:
-            manifest (~models.Manifest):
+            manifest (~megu.models.content.Manifest):
                 The manifest of the downloaded artifacts.
             to_path (~pathlib.Path):
                 The path that the artifacts should be merged into.

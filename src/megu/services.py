@@ -22,11 +22,11 @@ def normalize_url(url: Union[str, Url]) -> Url:
     """Normalize a given URL to a formatted Url instance.
 
     Args:
-        url (Union[str, ~models.Url]):
+        url (Union[str, ~megu.models.content.Url]):
             The given url as either a string or a Url instance.
 
     Returns:
-        Url:
+        ~megu.models.content.Url:
             The normal Url instance.
     """
 
@@ -44,14 +44,14 @@ def get_plugin(
     """Get the best available plugin for a given url.
 
     Args:
-        url (Union[str, ~models.Url]):
+        url (Union[str, ~megu.models.content.Url]):
             The URL string to fetch the appropriate plugin for.
         plugin_dirpath (Optional[~pathlib.Path]):
             The path to the directory of plugins to read through.
             Defaults to None.
 
     Returns:
-        ~plugin.BasePlugin:
+        ~megu.plugin.BasePlugin:
             The best available plugin that can handle the given url.
     """
 
@@ -98,13 +98,13 @@ def iter_content(
     """Shortcut to discover and iterate over content for a given URL.
 
     Args:
-        url (Union[str, ~models.Url]):
+        url (Union[str, ~megu.models.content.Url]):
             The URL to discover content for.
-        plugin (~plugins.BasePlugin):
+        plugin (~megu.plugins.BasePlugin):
             The plugin to use for extracting content.
 
     Yields:
-        ~models.Content:
+        :class:`~megu.models.content.Content`:
             The content extracted for the URL by the most suitable available plugin.
     """
 
@@ -119,11 +119,11 @@ def get_downloader(content: Content) -> BaseDownloader:
     """Get the best available downloader for the given content.
 
     Args:
-        content (~models.Content):
+        content (~megu.models.content.Content):
             The content that the downloader should be able to handle.
 
     Returns:
-        ~downloaders.base.BaseDownloader:
+        ~megu.download.BaseDownloader:
             The best available downloader instance for the given content.
     """
 
@@ -149,9 +149,9 @@ def merge_manifest(plugin: BasePlugin, manifest: Manifest, to_path: Path) -> Pat
     """Merge a manifest with the given plugin and finalize content to the given path.
 
     Args:
-        plugin (~plugin.base.BasePlugin):
+        plugin (~megu.plugin.BasePlugin):
             The plugin that was used to extract the content of the manifest.
-        manifest (~models.Manifest):
+        manifest (~megu.models.content.Manifest):
             The resulting content and artifact manifest.
         to_path (~pathlib.Path):
             The path the content should be finalized at.

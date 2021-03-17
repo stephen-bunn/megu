@@ -14,11 +14,11 @@ def best_content(content: Iterable[Content]) -> Iterable[Content]:
     """Get the best quality content from the extracted content iterator.
 
     Args:
-        content (Iterable[~models.Content]):
+        content (Iterable[~models.content.Content]):
             The iterable of content that was extracted
 
     Returns:
-        ~models.Content:
+        ~models.content.Content:
             The highest quality content
     """
 

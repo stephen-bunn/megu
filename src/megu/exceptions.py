@@ -12,7 +12,8 @@ class MeguException(Exception):
         """Initialize the global project exception.
 
         Args:
-            message (str): The exception message
+            message (str):
+                The exception message.
         """
 
         super().__init__(message)

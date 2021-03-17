@@ -2,7 +2,13 @@
 # Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
 # ISC License <https://choosealicense.com/licenses/isc>
 
-"""Contains definitions of content types used throughout the project."""
+"""Contains definitions of content types used throughout the project.
+
+.. py:class:: Url
+
+    A basic wrapper around a furl_ URL to keep things consistent between plugins and the
+    internals of the package without declaring a direct dependency on a third-party.
+"""
 
 import abc
 import mimetypes
@@ -19,7 +25,18 @@ Url = furl
 
 
 class Checksum(BaseModel):
-    """Describes a checksum that should be used for content validation."""
+    """Describes a checksum that should be used for content validation.
+
+    Parameters:
+        type (~hasher.HashType):
+            The type of checksum hash is being defined.
+        hash (str):
+            The value of the checksum hash being defined.
+        data (~typing.Dict, optional):
+            Model parameter dictionary provided by pydantic.
+            You should *likely* never use this property unless you need a keyword
+            argument for a dictionary payload to construct the model.
+    """
 
     type: HashType = Field(
         title="Type",
@@ -32,7 +49,29 @@ class Checksum(BaseModel):
 
 
 class Meta(BaseModel):
-    """Describes some additional metadata about the extracted content."""
+    """Describes some additional metadata about the extracted content.
+
+    Parameters:
+        id (Optional[str], optional):
+            The site internal identifier for the extracted content.
+        title (Optional[str], optional):
+            The site defined title for the extracted content.
+        description (Optional[str], optional):
+            The site defined description for the extracted content.
+        publisher (Optional[str], optional):
+            The site defined publisher name for the extracted content.
+        published_at (Optional[~datetime.datetime], optional):
+            The site defined datetime timestamp for when the extracted content was
+            published.
+        filename (Optional[str], optional):
+            The site defined filename for the extracted content.
+        thumbnail (Optional[str], optional):
+            The URL for the thumbnail of the extracted content.
+        data (~typing.Dict, optional):
+            Model parameter dictionary provided by pydantic.
+            You should *likely* never use this property unless you need a keyword
+            argument for a dictionary payload to construct the model.
+    """
 
     id: Optional[str] = Field(
         default=None,
@@ -77,7 +116,20 @@ class Meta(BaseModel):
 
 
 class Resource(abc.ABC, BaseModel):
-    """The base resource class that resource types must inherit from."""
+    """The base resource class that resource types must inherit from.
+
+    .. important::
+        This class is abstract and used as an typing interface for the
+        :class:`~megu.models.content.Content` model.
+        Concrete implementations of this abstract class such as
+        :class:`~megu.models.http.HttpResource` must be provided to content in order
+        for the application to understand how to fetch the content.
+
+    Parameters:
+        data (~typing.Dict, optional):
+            You should never use this parameter.
+            Since this is an abstract class, you should never be instantiating it.
+    """
 
     @abc.abstractproperty
     def fingerprint(self) -> str:
@@ -85,7 +137,6 @@ class Resource(abc.ABC, BaseModel):
 
         Raises:
             NotImplementedError:
-                If a subclass simply calls ``super().fingerprint``.
                 Subclasses must implement this property.
 
         Returns:
@@ -99,7 +150,33 @@ class Resource(abc.ABC, BaseModel):
 
 
 class Content(BaseModel):
-    """Describes some extracted content that can be downloaded."""
+    """Describes some extracted content that can be downloaded.
+
+    Parameters:
+        id (str):
+            The plugin-defined content-unique identifier for the content.
+        url (str):
+            The absolute URL from where the plugin extracted the content.
+            This URL string gets translated into a Pydantic_ ``AnyHttpUrl`` instance.
+        quality (float):
+            The plugin-defined arbitrary quality of the content.
+        size (int):
+            The size in bytes the content will take up on the local filesystem.
+        type (str):
+            The appropriate mimetype of the content.
+        resources (List[~megu.models.content.Resource]):
+            The resources required to fetch and download the extracted content.
+        meta (~megu.models.content.Meta):
+            The structured metadata of the extracted content.
+        checksums (List[~megu.models.content.Checksum]):
+            A list of checksums that can be used to verify the downloaded content.
+        extra (Dict[str, ~typing.Any):
+            The unstructured metadata of the extracted content.
+        data (~typing.Dict, optional):
+            Model parameter dictionary provided by pydantic.
+            You should *likely* never use this property unless you need a keyword
+            argument for a dictionary payload to construct the model.
+    """
 
     class Config:
         """Configuration for Content model validation."""
@@ -176,7 +253,19 @@ class Content(BaseModel):
 
 
 class Manifest(BaseModel):
-    """Describes the downloaded artifacts ready to be merged."""
+    """Describes the downloaded artifacts ready to be merged.
+
+    Parameters:
+        content (~models.content.Content):
+            The content instance that was download.
+        artifacts (List[Tuple[~models.content.Resource, ~pathlib.Path]]):
+            A tuple containing (resource, path) of content resources that were
+            downloaded to the local filesystem.
+        data (~typing.Dict, optional):
+            Model parameter dictionary provided by pydantic.
+            You should *likely* never use this property unless you need a keyword
+            argument for a dictionary payload to construct the model.
+    """
 
     content: Content = Field(
         title="Content",

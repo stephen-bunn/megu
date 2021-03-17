@@ -123,10 +123,10 @@ def temporary_file(
             The mode the file should be opened with.
         dirpath (~pathlib.Path, optional):
             The directory path the temporary file should be opened in.
-            Defaults to ``TEMP_DIRPATH``.
+            Defaults to :attr:`~megu.constants.TEMP_DIRPATH`.
 
     Yields:
-        Tuple[~pathlib.Path, IO]:
+        Tuple[:class:`~pathlib.Path`, :class:`~typing.IO`]:
             A tuple containing the temporary file's path and the file handle.
     """
 
@@ -148,12 +148,12 @@ def temporary_directory(
     Args:
         prefix (str):
             The prefix of the temporary directory.
-        dirpath (Path, optional):
+        dirpath (~pathlib.Path, optional):
             The directory path the temporary directory should be created in.
-            Defaults to ``TEMP_DIRPATH``.
+            Defaults to :attr:`~megu.constants.TEMP_DIRPATH`.
 
     Yields:
-        ~pathlib.Path:
+        :class:`~pathlib.Path`:
             The temporary directory's path.
     """
 
@@ -170,7 +170,7 @@ def get_soup(markup: str) -> BeautifulSoup:
             The HTML markup to use when building a BeautifulSoup instance.
 
     Returns:
-        :class:`~bs4.BeautifulSoup`:
+        ~bs4.BeautifulSoup:
             The parsed soup for the given HTML markup.
     """
 

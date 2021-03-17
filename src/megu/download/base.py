@@ -2,7 +2,12 @@
 # Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
 # ISC License <https://choosealicense.com/licenses/isc>
 
-"""Contains the abstractions necessary to build content downloaders."""
+"""Contains the abstractions necessary to build content downloaders.
+
+Attributes:
+    DEFAULT_MAX_CONNECTIONS (int):
+        The maximum number of connections permittable for a standard download.s
+"""
 
 import abc
 from pathlib import Path
@@ -31,11 +36,12 @@ class BaseDownloader(abc.ABC):
         """Check if some given content can be handled by the downloader.
 
         Args:
-            content (~models.Content):
+            content (~models.content.Content):
                 The content to check against the current content.
 
         Returns:
-            bool: True if the downloader can handle downloading the content,
+            bool:
+                True if the downloader can handle downloading the content,
                 otherwise False
         """
 
@@ -53,17 +59,17 @@ class BaseDownloader(abc.ABC):
         """Download the resources of some content to temporary storage.
 
         Args:
-            content (~models.Content):
+            content (~models.content.Content):
                 The content to download.
             max_connections (int, optional):
                 The limit of connections to make to handle downloading the content.
-                Defaults to DEFAULT_MAX_CONNECTIONS.
+                Defaults to :attr:`~DEFAULT_MAX_CONNECTIONS`.
             update_hook (Optional[Callable[[int], Any]], optional):
                 Callable for reporting downloaded chunk sizes.
-                Defaults to None.
+                Defaults to :data:`None`.
 
-        Yields:
-            ~models.Manifest:
+        Returns:
+            ~models.content.Manifest:
                 The manifest of downloaded content and local file artifacts.
         """
 
@@ -75,7 +81,7 @@ class BaseDownloader(abc.ABC):
         """Allocate a specific number of bytes to a non-existing filepath.
 
         Args:
-            to_path (:class:`pathlib.Path`):
+            to_path (~pathlib.Path):
                 The filepath to allocate a specific number of bytes to.
             size (int):
                 The number of bytes to allocate.
@@ -85,7 +91,7 @@ class BaseDownloader(abc.ABC):
                 If the given filepath already exists
 
         Returns:
-            :class:`pathlib.Path`: The given filepath
+            ~pathlib.Path: The given filepath
         """
 
         if to_path.exists():

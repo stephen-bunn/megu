@@ -35,7 +35,22 @@ class HttpMethod(Enum):
 
 
 class HttpResource(Resource):
-    """Describes a downloadable HTTP resource that is part of some local content."""
+    """Describes a downloadable HTTP resource that is part of some local content.
+
+    Parameters:
+        method (~megu.models.http.HttpMethod):
+            The HTTP method that should be used to fetch this resource.
+        url (str):
+            The URL that should be used to fetch this resource.
+            This URL string gets translated into a Pydantic_ ``AnyHttpUrl`` instance.
+        headers (dict):
+            The dictionary of headers to use to fetch this resource (if any).
+        data (Optional[bytes], optional):
+            The data body to send in the resource request (if any).
+        auth: (Optional[Callable[[~requests.Request], ~requests.Request]], optional):
+            A callable that mutates a request to ensure it is authenticated for
+            fetching the resource.
+    """
 
     class Config:
         """Model configuration for the Resource model."""
@@ -68,6 +83,13 @@ class HttpResource(Resource):
     )
 
     def _get_signature(self) -> bytes:
+        """Get the unique signature of the request data.
+
+        Returns:
+            bytes:
+                A byte array containing a unique signature for the current resource.
+        """
+
         signature = bytes(
             "|".join((str(self.method.value), str(self.url), str(self.headers))),
             "utf-8",
@@ -100,11 +122,11 @@ class HttpResource(Resource):
         """Produce an resource from an existing prepared request.
 
         Args:
-            request (:class:`~requests.PreparedRequest`):
+            request (~requests.PreparedRequest):
                 The request to construct an resource from.
 
         Returns:
-            :class:`~types.HTTPResource`:
+            ~megu.models.http.HttpResource:
                 The newly produced resource.
         """
 
@@ -119,7 +141,7 @@ class HttpResource(Resource):
         """Get a matching prepared request for the current resource.
 
         Returns:
-            :class:`~requests.PreparedRequest`:
+            ~requests.PreparedRequest:
                 The matching prepared request for the current resource.
         """
 

@@ -4,7 +4,6 @@
 
 """Contains logic to install plugins into a directory."""
 
-
 import re
 import shutil
 import subprocess
@@ -70,7 +69,7 @@ def remove_plugin(package: str, plugin_dirpath: Path = PLUGIN_DIRPATH):
             The name of the package to remove.
         plugin_dirpath (~pathlib.Path, optional):
             The plugin directory to remove the package from.
-            Defaults to ``PLUGIN_DIRPATH``.
+            Defaults to :attr:`~megu.constants.PLUGIN_DIRPATH`.
 
     Raises:
         NotADirectoryError:
@@ -99,11 +98,12 @@ def add_plugin(
         simply will not work.
 
     Args:
-        resource (str):
-            The resource that pip should use to discover your plugin.
+        package (str):
+            The package identifier that pip should use to discover and install your
+            plugin.
         plugin_dirpath (~pathlib.Path, optional):
             The directory the plugin should be installed to.
-            Defaults to ``PLUGIN_DIRPATH``.
+            Defaults to :attr:`~megu.constants.PLUGIN_DIRPATH`.
         silence_subprocess (bool):
             If set to ``True``, will redirect output of subprocess calls to /dev/null.
             Defaults to ``False``.

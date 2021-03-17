@@ -52,11 +52,12 @@ class BasePlugin(abc.ABC):  # pragma: no cover
         """Check if a given Url can be handled by the plugin.
 
         Args:
-            url (:class:`~.types.Url`):
+            url (~megu.models.content.Url):
                 The URL to check against the current plugin.
 
         Returns:
-            bool: True if the plugin can handle the given URL, otherwise False
+            bool:
+                True if the plugin can handle the given URL, otherwise False
         """
 
         raise NotImplementedError(
@@ -68,11 +69,12 @@ class BasePlugin(abc.ABC):  # pragma: no cover
         """Extract content from the given URL.
 
         Args:
-            url (:class:`~.types.Url`):
+            url (~megu.models.content.Url):
                 The URL to extract content from.
 
         Yields:
-            :class:`~.types.Content`: The discovered content from the given URL.
+            :class:`~megu.models.content.Content`:
+                The discovered content from the given URL.
         """
 
         raise NotImplementedError(
@@ -84,7 +86,7 @@ class BasePlugin(abc.ABC):  # pragma: no cover
         """Merge downloaded artifacts from a manifest to a singular local filepath.
 
         Args:
-            manifest (~models.Manifest):
+            manifest (~megu.models.content.Manifest):
                 The manifest containing the content and its downloaded artifacts.
             to_path (~pathlib.Path):
                 The path to merge to artifacts to.

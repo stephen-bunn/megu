@@ -31,11 +31,11 @@ def build_progress(
     error_message: Optional[str] = None,
     **kwargs,
 ) -> tqdm:
-    """Build a progress bar for the CLI to use.
+    """Build a progress bar context manager for the CLI to use.
 
     Args:
-        ctx (typer.Context):
-            The context of teh current Typer instance.
+        ctx (~typer.Context):
+            The context of the current Typer instance.
         report (bool, optional):
             If True, will report success and failures automatically.
             Defaults to True.
@@ -55,7 +55,7 @@ def build_progress(
 
     Returns:
         ~tqdm.tqdm:
-            A :mod:`tqdm` progress bar instance.
+            A tqdm_ progress bar instance.
     """
 
     # we control if the progress bar is disabled through the context
@@ -93,10 +93,10 @@ def build_spinner(
     error_message: Optional[str] = None,
     **kwargs,
 ) -> Yaspin:
-    """Build a spinner for the CLI to use.
+    """Build a spinner context manager for the CLI to use.
 
     Args:
-        ctx (typer.Context):
+        ctx (~typer.Context):
             The context of the current Typer instance.
         report (bool, optional):
             If True, will report success and failures automatically.
@@ -117,7 +117,7 @@ def build_spinner(
 
     Returns:
         ~yaspin.core.Yaspin:
-           A :mod:`yaspin` spinner instance.
+           A yaspin_ spinner instance.
     """
 
     if is_debug_context(ctx):
@@ -155,7 +155,7 @@ def format_plugin(plugin: BasePlugin) -> str:
     """Format a given plugin as a user-friendly display string.
 
     Args:
-        plugin (~plugin.base.BasePlugin):
+        plugin (~megu.plugin.base.BasePlugin):
             The plugin to format.
 
     Returns:
@@ -170,11 +170,11 @@ def display_plugin(ctx: typer.Context, package_name: str, plugins: List[BasePlug
     """Display the results of plugin discovery in a user-friendly way.
 
     Args:
-        ctx (typer.Context):
+        ctx (~typer.Context):
             The current context of the active Typer instance.
         package_name (str):
             The name of the package the plugins were loaded from.
-        plugins (List[~plugin.base.BasePlugin]):
+        plugins (List[~megu.plugin.base.BasePlugin]):
             The list of loaded plugins from the package.
     """
 
@@ -191,7 +191,7 @@ def format_content(content: Content) -> str:
     """Format the given content as a user-friendly display string.
 
     Args:
-        content (~models.Content):
+        content (~megu.models.content.Content):
             The content to format.
 
     Returns:

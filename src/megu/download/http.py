@@ -2,7 +2,16 @@
 # Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
 # ISC License <https://choosealicense.com/licenses/isc>
 
-"""Contains logic for handling HTTP downloads."""
+"""Contains logic for handling HTTP downloads.
+
+Attributes:
+    DEFAULT_CHUNK_SIZE (int):
+        The default bytesize that the HTTP downloader should use for streaming content.
+    DEFAULT_MAX_CONNECTIONS (int):
+        The default maximum number of HTTP connections the downloader should use.
+    CONTENT_RANGE_PATTERN (~typing.Pattern):
+        A compiled regex pattern to help matching content range header values.
+"""
 
 import re
 import warnings
@@ -38,7 +47,7 @@ class HttpDownloader(BaseDownloader):
         """HTTP session to use for downloading resources.
 
         Returns:
-            :class:`~requests.Session`:
+            ~requests.Session:
                 The HTTP session to use for downloading resources.
         """
 
@@ -51,11 +60,12 @@ class HttpDownloader(BaseDownloader):
         """Check if some given content can be handled by the HTTP downloader.
 
         Args:
-            content (~models.Content):
+            content (~models.content.Content):
                 The content to check against the current content.
 
         Returns:
-            bool: True if the downloader can handle downloading the content,
+            bool:
+                True if the downloader can handle downloading the content,
                 otherwise False
         """
 
@@ -67,7 +77,7 @@ class HttpDownloader(BaseDownloader):
         """Request a response for a given HTTP resource.
 
         Args:
-            resource (~models.HttpResource):
+            resource (~models.http.HttpResource):
                 The HTTP resource to request.
             stream (bool, optional):
                 If True, will open a response stream rather than attempting to fetch
@@ -75,7 +85,8 @@ class HttpDownloader(BaseDownloader):
                 Defaults to True.
 
         Returns:
-            requests.Response: The response for the given resource.
+            ~requests.Response:
+                The response for the given resource.
         """
 
         log.info(f"Sending request for resource {resource}")
@@ -92,18 +103,18 @@ class HttpDownloader(BaseDownloader):
         """Handle downloading a normal response for a given HTTP resource.
 
         Args:
-            resource (HttpResource):
+            resource (~models.http.HttpResource):
                 The resource that resulted in an OK response.
-            response (Response):
+            response (~requests.Response):
                 The OK response.
-            to_path (Path):
+            to_path (~pathlib.Path):
                 The path the content of the resource should be downloaded to.
             chunk_size (int, optional):
                 The size in bytes to stream chunks of data from the server.
-                Defaults to ``DEFAULT_CHUNK_SIZE``.
+                Defaults to :attr:`~megu.download.http.DEFAULT_CHUNK_SIZE`.
             update_hook (Optional[Callable[[int], Any]], optional):
                 A progress update hook to write the downloaded length of content to.
-                Defaults to None.
+                Defaults to :data:`None`.
 
         Returns:
             ~pathlib.Path:
@@ -136,23 +147,23 @@ class HttpDownloader(BaseDownloader):
         Args:
             resource (~models.http.HttpResource):
                 The resource that resulted in a partial response.
-            response (requests.Response):
+            response (~requests.Response):
                 The partial response.
             to_path (~pathlib.Path):
                 The path the content of the resource should be downloaded to.
             chunk_size (int, optional):
                 The size in bytes to stream chunks of data from the server.
-                Defaults to ``DEFAULT_CHUNK_SIZE``.
+                Defaults to :attr:`~DEFAULT_CHUNK_SIZE`.
             update_hook (Optional[Callable[[int], Any]], optional):
                 A progress update hook to write the downloaded length of content.
-                Defaults to None.
+                Defaults to :data:`None`.
 
         Raises:
             ValueError:
                 When the downloading of the partial resource fails for any reason.
 
         Returns:
-            Path:
+            ~pathlib.Path:
                 The path the resource was downloaded to (should be ``to_path``).
         """
 
@@ -284,13 +295,15 @@ class HttpDownloader(BaseDownloader):
         """Download some resource to a specific filepath.
 
         Args:
-            request (~models.HTTPResource):
+            resource (~models.http.HttpResource):
                 The resource to download.
-            to_path (:class:`pathlib.Path`):
+            resource_index (int):
+                The content's index of the resource in its list of resources.
+            to_path (~pathlib.Path):
                 The filepath to download the resource to.
             chunk_size (int, optional):
                 The byte size of chunks to stream the resource data in.
-                Defaults to DEFAULT_CHUNK_SIZE.
+                Defaults to :attr:`~DEFAULT_CHUNK_SIZE`.
             update_hook (Optional[Callable[[int], Any]], optional):
                 Callable for reporting downloaded chunk sizes.
                 Defaults to None.
@@ -300,7 +313,7 @@ class HttpDownloader(BaseDownloader):
                 When attempting to download the resource fails for any reason.
 
         Returns:
-            Tuple[int, ~models.HttpResource, ~pathlib.Path]
+            Tuple[int, ~models.http.HttpResource, ~pathlib.Path]:
                 A tuple containing the index, the resource, and the path the resource
                 was downloaded to.
         """
@@ -356,10 +369,10 @@ class HttpDownloader(BaseDownloader):
                 The ending range of the first request.
             size (Optional[int], optional):
                 The full size of the data being requested, if available.
-                Defaults to None.
+                Defaults to :data:`None`.
             chunk_size (Optional[int], optional):
                 The custom chunk-size to use for the generated ranges.
-                Defaults to None.
+                Defaults to :data:`None`.
 
         Yields:
             Tuple[int, int]:
@@ -386,7 +399,7 @@ class HttpDownloader(BaseDownloader):
         """Get the full byte size of the given content.
 
         Args:
-            content (~models.Content):
+            content (~models.content.Content):
                 The content to get the byte size of.
 
         Returns:
@@ -418,17 +431,17 @@ class HttpDownloader(BaseDownloader):
         """Download the resource of some content to temporary storage.
 
         Args:
-            content (~models.Content):
+            content (~models.content.Content):
                 The content to download.
             max_connections (int, optional):
                 The limit of connections to make to handle downloading the content.
-                Defaults to DEFAULT_MAX_CONNECTIONS.
+                Defaults to :attr:`~DEFAULT_MAX_CONNECTIONS`.
             update_hook (Optional[Callable[[int], Any]], optional):
                 Callable for reporting downloaded chunk sizes.
-                Defaults to None.
+                Defaults to :data:`None`.
 
-        Yields:
-            ~models.Manifest:
+        Returns:
+            ~models.content.Manifest:
                 The manifest of downloaded content and local file artifacts.
         """
 

@@ -14,7 +14,7 @@ def discover_downloaders() -> Generator[Type[BaseDownloader], None, None]:
     """Discover the available downloaders in the project.
 
     Yields:
-        Type[BaseDownloader]:
+        Type[:class:`~megu.download.base.BaseDownloader`]:
             The currently available downloaders.
     """
 

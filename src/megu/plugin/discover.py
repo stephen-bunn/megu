@@ -24,15 +24,15 @@ def load_plugin(plugin_name: str, plugin_class: Type[BasePlugin]) -> BasePlugin:
     Args:
         plugin_name (str):
             The name of the plugin package
-        plugin_class (Type[:class:`~.plugin.base.BasePlugin`]):
+        plugin_class (Type[~megu.plugin.base.BasePlugin]):
             The plugin class from the plugin package
 
     Raises:
-        :class:`~.exceptions.PluginFailure`:
+        ~megu.exceptions.PluginFailure:
             When the plugin fails to load
 
     Returns:
-        :class:`~.plugin.base.BasePlugin`:
+        ~megu.plugin.base.BasePlugin:
             The loaded plugin instance
     """
 
@@ -57,11 +57,11 @@ def load_plugin_module(module_name: str) -> ModuleType:
             The name of the plugin module
 
     Raises:
-        :class:`~.exceptions.PluginFailure`:
+        ~megu.exceptions.PluginFailure:
             When the plugin module fails to import
 
     Returns:
-        :class:`types.ModuleType`:
+        ~types.ModuleType:
             The imported plugin module
     """
 
@@ -84,18 +84,18 @@ def discover_plugins(
     """Discover and load plugins from a given directory of plugin modules.
 
     Args:
-        package_dirpath (:class:`pathlib.Path`):
+        package_dirpath (~pathlib.Path):
             The path of the directory to look for plugins in.
-        plugin_type (Type, optional):
+        plugin_type (~typing.Type, optional):
             The type of plugin to filter for and attempt to load.
-            Defaults to :class:`~.plugin.base.BasePlugin`
+            Defaults to :class:`~megu.plugin.BasePlugin`
 
     Raises:
-        :class:`~.exceptions.PluginFailure`:
+        ~megu.exceptions.PluginFailure:
             When a discovered plugin fails to load
 
     Yields:
-        Tuple[str, List[:class:`~.plugin.base.BasePlugin`]]:
+        Tuple[str, List[:class:`~megu.plugin.BasePlugin`]]:
             A tuple of the plugin name and the instances of exported plugins from that
             plugin module
     """
@@ -158,13 +158,13 @@ def iter_available_plugins(
     Args:
         plugin_dirpath (~pathlib.Path, optional):
             The path to the directory where plugins are installed.
-            Defaults to ``PLUGIN_DIRPATH``.
-        plugin_type (Type, optional):
+            Defaults to :attr:`~megu.constants.PLUGIN_DIRPATH`.
+        plugin_type (~typing.Type, optional):
             The type of plugins to load.
-            Defaults to :class:`~.plugin.base.BasePlugin`.
+            Defaults to :class:`~megu.plugin.BasePlugin`.
 
     Yields:
-        Tuple[str, List[:class:`~.plugin.base.BasePlugin`]]:
+        Tuple[str, List[:class:`~megu.plugin.BasePlugin`]]:
             A tuple of the plugin name and the instances of exported plugins from
             available plugin modules.
     """

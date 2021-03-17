@@ -133,6 +133,11 @@ exclude_patterns = ["_links.rst"]
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
 
+# Handle global project external link references
+rst_epilog = ""
+with open("./_links.rst", "r") as file_handle:
+    rst_epilog = file_handle.read()
+
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -264,4 +269,6 @@ epub_exclude_files = ["search.html"]
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3.9/", None),
+    "requests": ("https://requests.readthedocs.io/en/master/", None),
+    "diskcache": ("http://www.grantjenks.com/docs/diskcache/", None),
 }

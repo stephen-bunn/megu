@@ -7,6 +7,23 @@ Megu Package
 ------------
 
 .. automodule:: megu.cli
+
+``style``
+~~~~~~~~~
+
+.. automodule:: megu.cli.style
+   :members:
+
+``ui``
+~~~~~~
+
+.. automodule:: megu.cli.ui
+   :members:
+
+``utils``
+~~~~~~~~~
+
+.. automodule:: megu.cli.utils
    :members:
 
 ----
@@ -23,6 +40,23 @@ Megu Package
 -----------------
 
 .. automodule:: megu.download
+
+``base``
+~~~~~~~~
+
+.. automodule:: megu.download.base
+   :members:
+
+``discover``
+~~~~~~~~~~~~
+
+.. automodule:: megu.download.discover
+   :members:
+
+``http``
+~~~~~~~~
+
+.. automodule:: megu.download.http
    :members:
 
 ----
@@ -70,6 +104,8 @@ Megu Package
 ``megu.models``
 ---------------
 
+.. automodule:: megu.models
+
 ``content``
 ~~~~~~~~~~~
 
@@ -88,6 +124,29 @@ Megu Package
 ---------------
 
 .. automodule:: megu.plugin
+
+``base``
+~~~~~~~~
+
+.. automodule:: megu.plugin.base
+   :members:
+
+``discover``
+~~~~~~~~~~~~
+
+.. automodule:: megu.plugin.discover
+   :members:
+
+``generic``
+~~~~~~~~~~~
+
+.. automodule:: megu.plugin.generic
+   :members:
+
+``manage``
+~~~~~~~~~~
+
+.. automodule:: megu.plugin.manage
    :members:
 
 ----

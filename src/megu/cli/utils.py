@@ -81,6 +81,9 @@ def get_echo(ctx: typer.Context, nl: bool = False) -> Callable[[str], Any]:
     Args:
         ctx (typer.Context):
             The current typer context instance.
+        nl (bool, optional):
+            If True, newlines will be provided at the end of all echos automatically.
+            Defaults to False.
 
     Returns:
         Callable[[str], Any]: The appropriate print callable given the context.

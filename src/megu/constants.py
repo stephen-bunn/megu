@@ -2,7 +2,27 @@
 # Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
 # ISC License <https://choosealicense.com/licenses/isc>
 
-"""Contains project-wide constants."""
+"""Contains project-wide constants.
+
+Attributes:
+    APP_NAME (str):
+        The name of the application.
+        Should always be ``megu``.
+    APP_VERSION (str):
+        The current version of the megu application.
+    CONFIG_DIRPATH (~pathlib.Path):
+        The directory path where the application configuration lives.
+    PLUGIN_DIRPATH (~pathlib.Path):
+        The directory path where plugins are installed to.
+    CACHE_DIRPATH (~pathlib.Path):
+        The directory path where the application cache lives.
+    LOG_DIRPATH (~pathlib.Path):
+        The directory path where the application logs live.
+    TEMP_DIRPATH (~pathlib.Path):
+        The directory path where the application temporary files live.
+    STAGING_DIRPATH (~pathlib.Path):
+        The directory path where the application downloads content fragments to.
+"""
 
 import tempfile
 from pathlib import Path
