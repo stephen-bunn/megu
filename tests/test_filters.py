@@ -26,10 +26,10 @@ from .strategies import megu_content
 )
 def test_best_content_filter(content_list: List[Content]):
     content_iterator = iter(content_list)
-    content = next(best_content(content_iterator))
+    content = next(best_content(content_iterator))  # type: ignore
     assert isinstance(content, Content)
 
     with pytest.raises(StopIteration):
-        next(best_content(content_iterator))
+        next(best_content(content_iterator))  # type: ignore
 
     assert max([c.quality for c in content_list]) == content.quality
