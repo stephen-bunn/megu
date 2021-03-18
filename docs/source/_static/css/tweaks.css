@@ -2,44 +2,12 @@
   background-color: #743 !important;
 }
 
-.ui.tabular.menu {
-  font-size: 16px;
-}
-
-.ui.sphinx-tab.tab {
-  font-size: 16px;
-}
-
-.sphinx-tabs > .ui.attached.tabular.menu {
-  border: none;
-}
-
-.sphinx-tabs .sphinx-menu a.item {
-  color: #f8f8f2 !important;
-}
-
-.sphinx-tabs > .ui .top > a.item {
-  background-color: #3c394e;
-  border: none !important;
-}
-
-.sphinx-tabs > .ui.attached.tabular.menu > a.active.item {
-  background-color: #3c394e;
-  border: none !important;
-  color: #8aff80 !important;
-}
-
-.sphinx-tabs > div.tab {
-  background-color: #3c394e;
-  border: none !important;
-}
-
 .tooltipster-base {
   background-color: transparent !important;
 }
 
 .tooltipster-box {
-  background-color: #e6d2b8 !important;
+  background-color: #fae4c8 !important;
   box-shadow: 0 0 10px 0 #602a21 !important;
 }
 
