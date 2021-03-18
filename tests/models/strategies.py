@@ -2,8 +2,7 @@
 # Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
 # ISC License <https://choosealicense.com/licenses/isc>
 
-"""
-"""
+"""Contains custom hypothesis strategies for model testing."""
 
 import string
 from typing import Callable, Optional

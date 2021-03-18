@@ -271,7 +271,9 @@ def megu_content(
             if quality_strategy
             else floats(min_value=0, allow_nan=False)
         ),
-        size=draw(size_strategy if size_strategy else integers(min_value=1)),
+        size=draw(
+            size_strategy if size_strategy else integers(min_value=1, max_value=1024)
+        ),
         type=draw(type_strategy if type_strategy else sampled_from(VALID_MIMETYPES)),
         extension=draw(
             extension_strategy
