@@ -132,7 +132,7 @@ class Resource(abc.ABC, BaseModel):
     """
 
     @abc.abstractproperty
-    def fingerprint(self) -> str:
+    def fingerprint(self) -> str:  # pragma: no cover
         """Get the unique identifier of an resource.
 
         Raises:
@@ -207,6 +207,11 @@ class Content(BaseModel):
         description="The appropriate mimetype for the content.",
         min_length=1,
     )
+    extension: Optional[str] = Field(
+        title="Extension",
+        description="The appropriate file extension for the content.",
+        regex=r"^\..+$",
+    )
     resources: List[Resource] = Field(
         title="Resources",
         description="The resources to fetch to recreate the remote content locally.",
@@ -229,15 +234,19 @@ class Content(BaseModel):
     )
 
     @property
-    def extension(self) -> Optional[str]:
+    def ext(self) -> str:
         """File extension for the content.
 
         Returns:
-            Optional[str]:
-                The appropriate file extension for the content if discoverable.
+            str:
+                The best suitable file extension for the content.
+                May be a blank string if a extension cannot be determined.
         """
 
-        return mimetypes.guess_extension(self.type)
+        if self.extension is not None:
+            return self.extension
+
+        return mimetypes.guess_extension(self.type) or ""
 
     @property
     def filename(self) -> str:
@@ -248,8 +257,7 @@ class Content(BaseModel):
                 The appropriate filename for the content.
         """
 
-        extension = self.extension
-        return f"{self.id!s}{extension if extension else ''!s}"
+        return f"{self.id!s}{self.ext!s}"
 
 
 class Manifest(BaseModel):

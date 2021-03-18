@@ -255,6 +255,7 @@ def megu_content(
     quality_strategy: Optional[SearchStrategy[float]] = None,
     size_strategy: Optional[SearchStrategy[int]] = None,
     type_strategy: Optional[SearchStrategy[str]] = None,
+    extension_strategy: Optional[SearchStrategy[str]] = None,
     resources_strategy: Optional[SearchStrategy[List[Resource]]] = None,
     meta_strategy: Optional[SearchStrategy[Meta]] = None,
     checksum_strategy: Optional[SearchStrategy[List[Checksum]]] = None,
@@ -272,6 +273,11 @@ def megu_content(
         ),
         size=draw(size_strategy if size_strategy else integers(min_value=1)),
         type=draw(type_strategy if type_strategy else sampled_from(VALID_MIMETYPES)),
+        extension=draw(
+            extension_strategy
+            if extension_strategy
+            else one_of(from_regex(r"^\..+$"), none())
+        ),
         resources=draw(
             resources_strategy
             if resources_strategy

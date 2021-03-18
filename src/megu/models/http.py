@@ -147,7 +147,7 @@ class HttpResource(Resource):
 
         return Request(
             method=self.method.value,
-            url=self.url,
+            url=str(self.url),
             headers=self.headers,
             data=self.data,
         ).prepare()
