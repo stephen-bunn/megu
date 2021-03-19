@@ -51,4 +51,3 @@ def test_get_logger(debug: bool):
 
 def test_instance():
     assert isinstance(log.instance, loguru.logger.__class__)
-    assert log.get_logger() == log.instance
