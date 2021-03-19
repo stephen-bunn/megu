@@ -125,10 +125,17 @@ def temporary_file(
             The directory path the temporary file should be opened in.
             Defaults to :attr:`~megu.constants.TEMP_DIRPATH`.
 
+    Raises:
+        NotADirectoryError:
+            When the provided ``dirpath`` does not exist.s
+
     Yields:
         Tuple[:class:`~pathlib.Path`, :class:`~typing.IO`]:
             A tuple containing the temporary file's path and the file handle.
     """
+
+    if not dirpath.is_dir():
+        raise NotADirectoryError(f"No such directory {dirpath} exists")
 
     with NamedTemporaryFile(
         prefix=f"{prefix!s}-",
@@ -152,10 +159,17 @@ def temporary_directory(
             The directory path the temporary directory should be created in.
             Defaults to :attr:`~megu.constants.TEMP_DIRPATH`.
 
+    Raises:
+        NotADirectoryError:
+            When the provided ``dirpath`` does not exist.
+
     Yields:
         :class:`~pathlib.Path`:
             The temporary directory's path.
     """
+
+    if not dirpath.is_dir():
+        raise NotADirectoryError(f"No such directory {dirpath} exists")
 
     with TemporaryDirectory(prefix=prefix, dir=dirpath) as temp_dir:
         log.debug(f"Creating temporary directory at {temp_dir}")
