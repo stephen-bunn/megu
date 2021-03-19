@@ -27,7 +27,7 @@ def test_HttpResource_fingerprint(resource: HttpResource):
     assert len(resource.fingerprint) > 0
 
 
-@pytest.mark.skip(reason="Requests does nasty mutation of prepared requests")
+@pytest.mark.skip(reason="Requests and Pydantic have different interpretations of URLs")
 @given(requests_request())
 def test_HttpResource_from_request(request: Request):
     prepared_request = request.prepare()
@@ -38,6 +38,7 @@ def test_HttpResource_from_request(request: Request):
     assert resource.headers == prepared_request.headers
 
 
+@pytest.mark.skip(reason="Requests and Pydantic have different interpretations of URLs")
 @given(megu_http_resource(headers_strategy=builds(dict)))
 def test_HttpResource_to_request(resource: HttpResource):
     request = resource.to_request()
