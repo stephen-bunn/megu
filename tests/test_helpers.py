@@ -95,7 +95,6 @@ def test_disk_cache_creates_directory(cache_name: str):
 
             with disk_cache(cache_name) as cache:
                 assert diskcache_dirpath.is_dir() == True
-                assert diskcache_dirpath.stat().st_mode == 0o40755
                 assert isinstance(cache, Cache)
 
 
