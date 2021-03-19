@@ -33,7 +33,7 @@ from hypothesis.strategies import (
 from requests import Request
 
 from megu.hasher import HashType, hash_io
-from megu.models import Checksum, Content, HttpMethod, HttpResource, Manifest, Meta
+from megu.models import Checksum, Content, HttpMethod, HttpResource, Meta, Url
 from megu.models.content import Resource
 
 VALID_MIMETYPES = (
@@ -182,6 +182,13 @@ def requests_request(
         url=draw(url_strategy if url_strategy else urls()),
         headers=draw(headers_strategy if headers_strategy else builds(dict)),
     )
+
+
+@composite
+def megu_url(draw, url_strategy: Optional[SearchStrategy[str]] = None) -> Url:
+    """Composite strategy for building a megu Url model."""
+
+    return Url(draw(url_strategy if url_strategy else urls()))
 
 
 @composite
