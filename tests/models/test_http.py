@@ -11,8 +11,7 @@ from requests import PreparedRequest, Request
 
 from megu.models.http import HttpMethod, HttpResource
 
-from ..strategies import megu_content, megu_http_resource
-from .strategies import requests_request
+from ..strategies import megu_http_resource, requests_request
 
 
 @given(megu_http_resource())
@@ -28,7 +27,7 @@ def test_HttpResource_fingerprint(resource: HttpResource):
     assert len(resource.fingerprint) > 0
 
 
-@pytest.mark.skip(reason="Requests does nasty muation of prepared requests")
+@pytest.mark.skip(reason="Requests does nasty mutation of prepared requests")
 @given(requests_request())
 def test_HttpResource_from_request(request: Request):
     prepared_request = request.prepare()

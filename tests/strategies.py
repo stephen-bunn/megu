@@ -165,6 +165,26 @@ def hash_hexdigest(
 
 
 @composite
+def requests_request(
+    draw,
+    method_strategy: Optional[SearchStrategy[str]] = None,
+    url_strategy: Optional[SearchStrategy[str]] = None,
+    headers_strategy: Optional[SearchStrategy[dict]] = None,
+) -> Request:
+    """Composite strategy for building a basic requests Request instance."""
+
+    return Request(
+        method=draw(
+            method_strategy
+            if method_strategy
+            else sampled_from(list(HttpMethod.__members__.keys()))
+        ),
+        url=draw(url_strategy if url_strategy else urls()),
+        headers=draw(headers_strategy if headers_strategy else builds(dict)),
+    )
+
+
+@composite
 def megu_checksum(
     draw,
     type_strategy: Optional[SearchStrategy[HashType]] = None,
