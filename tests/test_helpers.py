@@ -134,7 +134,7 @@ def test_temporary_directory(prefix: str):
     assert temp_dirpath.is_dir() == False
 
 
-@given(text(string.printable))
+@given(text(string.ascii_letters + string.digits))
 def test_get_soup(dom: str):
     soup = get_soup(dom)
     assert isinstance(soup, BeautifulSoup)

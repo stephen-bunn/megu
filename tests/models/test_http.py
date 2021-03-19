@@ -10,8 +10,8 @@ from requests import PreparedRequest, Request
 
 from megu.models.http import HttpMethod, HttpResource
 
-from ..strategies import megu_content
-from .strategies import megu_http_resource, requests_request
+from ..strategies import megu_content, megu_http_resource
+from .strategies import requests_request
 
 
 @given(megu_http_resource())
