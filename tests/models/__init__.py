@@ -3,4 +3,3 @@
 # ISC License <https://choosealicense.com/licenses/isc>
 
 """Provides a namespace for the package model module tests."""
-
