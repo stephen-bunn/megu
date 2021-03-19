@@ -51,7 +51,7 @@ def test_noop_class(args: List[Any], kwargs: Dict[str, Any], random_attribute: s
     dictionaries(keys=pythonic_name(), values=builtin_types(), max_size=4),
 )
 def test_noop(args: List[Any], kwargs: Dict[str, Any]):
-    assert noop(*args, **kwargs) is None
+    assert noop(*args, **kwargs) is None  # type: ignore
 
 
 def test_http_session():
