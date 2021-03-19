@@ -18,7 +18,6 @@ from hypothesis import given
 from hypothesis.strategies import dictionaries, from_regex, lists, sampled_from, text
 from requests import Session
 
-import megu
 from megu.constants import TEMP_DIRPATH
 from megu.helpers import (
     DISK_CACHE_PATTERN,
@@ -147,10 +146,10 @@ def test_python_path_skips_inserts_if_none_provided():
         assert paths == starting_paths
 
 
-def test_python_path_inserts_provided_directories():
+@given(pathlib_path())
+def test_python_path_inserts_provided_directories(random_path: Path):
     starting_paths = sys.path.copy()
-    # should resolve and include `.` and `~` but not an empty string ``
-    with python_path("..", "~", "") as paths:
+    with python_path("..", "~", random_path.as_posix()) as paths:
         assert len(paths) - len(starting_paths) == 2
 
 
