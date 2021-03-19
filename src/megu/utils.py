@@ -16,17 +16,19 @@ from megu.constants import (
 )
 from megu.log import instance as log
 
+REQUIRED_DIRECTORIES = (
+    CACHE_DIRPATH,
+    CONFIG_DIRPATH,
+    LOG_DIRPATH,
+    PLUGIN_DIRPATH,
+    TEMP_DIRPATH,
+)
+
 
 def create_required_directories():
     """Handle setting up the required directories on the local machine."""
 
-    for required_dirpath in (
-        CACHE_DIRPATH,
-        CONFIG_DIRPATH,
-        LOG_DIRPATH,
-        PLUGIN_DIRPATH,
-        TEMP_DIRPATH,
-    ):
+    for required_dirpath in REQUIRED_DIRECTORIES:
         if not required_dirpath.is_dir():
             log.info(f"Creating required directory at {required_dirpath}")
             required_dirpath.mkdir(mode=0o777)
