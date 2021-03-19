@@ -10,6 +10,6 @@ This plugin should be completely skipped since it can't be initialized.
 from megu.plugin import BasePlugin
 
 
-class MeguTestPlugin(BasePlugin):
+class MeguBadPlugin(BasePlugin):
     def __init__(self):
         raise RuntimeError("Forced failure on plugin initialization")

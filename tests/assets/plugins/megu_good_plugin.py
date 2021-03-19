@@ -11,7 +11,7 @@ class MiscellaneousClass(object):
     ...
 
 
-class MeguTestPlugin(BasePlugin):
+class MeguGoodPlugin(BasePlugin):
     name = "Test Plugin"
     domains = {"google.com"}
 
@@ -21,8 +21,11 @@ class MeguTestPlugin(BasePlugin):
     def extract_content(self, url):
         ...
 
+    def merge_manifest(self, manifest, to_path):
+        return to_path
 
-class MeguSecondTestPlugin(BasePlugin):
+
+class MeguGoodPlugin2(BasePlugin):
     name = "Second Test Plugin"
     domains = {"google.com"}
 
@@ -31,3 +34,6 @@ class MeguSecondTestPlugin(BasePlugin):
 
     def extract_content(self, url):
         ...
+
+    def merge_manifest(self, manifest, to_path):
+        return to_path

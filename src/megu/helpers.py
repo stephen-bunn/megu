@@ -7,6 +7,7 @@
 import re
 import sys
 from contextlib import contextmanager
+from os import PathLike
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import IO, Generator, List, Tuple
@@ -178,11 +179,11 @@ def temporary_directory(
 
 
 @contextmanager
-def python_path(*paths: str) -> Generator[List[str], None, None]:
+def python_path(*paths: PathLike) -> Generator[List[str], None, None]:
     """Context manager for temporarily added directories to the Python search path.
 
     Args:
-        *paths (Tuple[str]):
+        *paths (Tuple[~os.PathLike]):
             The paths of directories that you want to add to the Python path.
 
     Yields:

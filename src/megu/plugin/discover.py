@@ -104,7 +104,7 @@ def discover_plugins(
     package_dirpath = package_dirpath.expanduser().absolute()
     package_dir = package_dirpath.as_posix()
 
-    with python_path(package_dir):
+    with python_path(package_dirpath):
         plugin_prefix = f"{APP_NAME!s}_"
 
         log.info(f"Discovering plugins in {package_dir!r}")
