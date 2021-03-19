@@ -5,10 +5,11 @@
 """Contains helper methods that plugins can use to simplify usage."""
 
 import re
+import sys
 from contextlib import contextmanager
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import IO, Generator, Tuple
+from typing import IO, Generator, List, Tuple
 
 from bs4 import BeautifulSoup
 from diskcache import Cache
@@ -174,6 +175,44 @@ def temporary_directory(
     with TemporaryDirectory(prefix=prefix, dir=dirpath) as temp_dir:
         log.debug(f"Creating temporary directory at {temp_dir}")
         yield Path(temp_dir)
+
+
+@contextmanager
+def python_path(*paths: str) -> Generator[List[str], None, None]:
+    """Context manager for temporarily added directories to the Python search path.
+
+    Args:
+        *paths (Tuple[str]):
+            The paths of directories that you want to add to the Python path.
+
+    Yields:
+        List[str]:
+            The temporarily mutated ``sys.path``.
+    """
+
+    original_paths = sys.path.copy()
+    try:
+        if len(paths) <= 0:
+            yield sys.path
+        else:
+            for directory_name in paths:
+                directory_path = Path(directory_name).expanduser().resolve()
+                if not directory_path.is_dir() or directory_path.as_posix() in sys.path:
+                    log.warning(
+                        f"Skipping inserting the directory {directory_path!s} into the "
+                        "Python path, is not a directory or already present"
+                    )
+                    continue
+
+                log.debug(
+                    f"Inserting directory {directory_path!s} into the Python path"
+                )
+                sys.path.insert(0, directory_path.as_posix())
+
+            yield sys.path
+    finally:
+        log.debug("Restoring original Python path")
+        sys.path = original_paths
 
 
 def get_soup(markup: str) -> BeautifulSoup:

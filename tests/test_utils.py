@@ -2,7 +2,7 @@
 # Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
 # ISC License <https://choosealicense.com/licenses/isc>
 
-"""Contains tests for logging setup."""
+"""Contains tests for package utilities."""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory

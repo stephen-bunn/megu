@@ -14,6 +14,7 @@ from typing import Generator, List, Tuple, Type
 
 from ..constants import APP_NAME, PLUGIN_DIRPATH
 from ..exceptions import PluginFailure
+from ..helpers import python_path
 from ..log import instance as log
 from .base import BasePlugin
 
@@ -103,50 +104,49 @@ def discover_plugins(
     package_dirpath = package_dirpath.expanduser().absolute()
     package_dir = package_dirpath.as_posix()
 
-    if package_dir not in sys.path:
-        log.debug(f"Inserting package directory {package_dir!r} into the Python path")
-        sys.path.insert(0, package_dir)
+    with python_path(package_dir):
+        plugin_prefix = f"{APP_NAME!s}_"
 
-    plugin_prefix = f"{APP_NAME!s}_"
-
-    log.info(f"Discovering plugins in {package_dir!r}")
-    for _, plugin_name, _ in pkgutil.iter_modules([package_dir]):
-        # filter out modules that are not prefixed with the application name
-        if not plugin_name.startswith(plugin_prefix):
-            log.warning(
-                f"Module {plugin_name!r} in {package_dir!r} does not use plugin prefix "
-                f"{plugin_prefix!r}, skipping"
-            )
-            continue
-
-        try:
-            log.debug(f"Processing plugin {plugin_name!r}")
-            plugin_module = load_plugin_module(plugin_name)
-        except PluginFailure:
-            continue
-
-        plugins: List[BasePlugin] = []
-
-        for plugin_export in vars(plugin_module).values():
-            # filter out exports that are not subclasses of the given plugin_type
-            if not (
-                plugin_export is not plugin_type
-                and inspect.isclass(plugin_export)
-                and issubclass(plugin_export, plugin_type)
-            ):
+        log.info(f"Discovering plugins in {package_dir!r}")
+        for _, plugin_name, _ in pkgutil.iter_modules([package_dir]):
+            # filter out modules that are not prefixed with the application name
+            if not plugin_name.startswith(plugin_prefix):
+                log.warning(
+                    f"Module {plugin_name!r} in {package_dir!r} does not use plugin "
+                    f"prefix {plugin_prefix!r}, skipping"
+                )
                 continue
 
             try:
-                log.debug(f"Found plugin export {plugin_export!r} in {plugin_name!r}")
-                plugins.append(load_plugin(plugin_name, plugin_export))
+                log.debug(f"Processing plugin {plugin_name!r}")
+                plugin_module = load_plugin_module(plugin_name)
             except PluginFailure:
                 continue
 
-        # skip yielding plugins if no usable plugins are found
-        if len(plugins) <= 0:
-            continue
+            plugins: List[BasePlugin] = []
 
-        yield (plugin_name, plugins)
+            for plugin_export in vars(plugin_module).values():
+                # filter out exports that are not subclasses of the given plugin_type
+                if not (
+                    plugin_export is not plugin_type
+                    and inspect.isclass(plugin_export)
+                    and issubclass(plugin_export, plugin_type)
+                ):
+                    continue
+
+                try:
+                    log.debug(
+                        f"Found plugin export {plugin_export!r} in {plugin_name!r}"
+                    )
+                    plugins.append(load_plugin(plugin_name, plugin_export))
+                except PluginFailure:
+                    continue
+
+            # skip yielding plugins if no usable plugins are found
+            if len(plugins) <= 0:
+                continue
+
+            yield (plugin_name, plugins)
 
 
 def iter_available_plugins(

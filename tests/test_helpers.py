@@ -6,6 +6,7 @@
 """
 
 import string
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
@@ -27,6 +28,7 @@ from megu.helpers import (
     http_session,
     noop,
     noop_class,
+    python_path,
     temporary_directory,
     temporary_file,
 )
@@ -138,6 +140,19 @@ def test_temporary_directory(prefix: str):
         assert temp_dirpath.is_dir() == True
 
     assert temp_dirpath.is_dir() == False
+
+
+def test_python_path_skips_inserts_if_none_provided():
+    starting_paths = sys.path.copy()
+    with python_path() as paths:
+        assert paths == starting_paths
+
+
+def test_python_path_inserts_provided_directories():
+    starting_paths = sys.path.copy()
+    # should resolve and include `.` and `~` but not an empty string ``
+    with python_path("..", "~", "") as paths:
+        assert len(paths) - len(starting_paths) == 2
 
 
 @given(text(string.ascii_letters + string.digits))
