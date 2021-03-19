@@ -188,7 +188,9 @@ def requests_request(
 def megu_url(draw, url_strategy: Optional[SearchStrategy[str]] = None) -> Url:
     """Composite strategy for building a megu Url model."""
 
-    return Url(draw(url_strategy if url_strategy else urls()))
+    return Url(
+        draw(url_strategy if url_strategy else urls().filter(lambda u: ":0/" not in u))
+    )
 
 
 @composite

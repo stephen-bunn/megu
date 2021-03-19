@@ -16,7 +16,7 @@ from megu.services import normalize_url
 from .strategies import megu_url
 
 
-@given(one_of(urls(), megu_url()))
+@given(one_of(urls().filter(lambda u: ":0/" not in u), megu_url()))
 def test_normalize_url(url: Union[Url, str]):
     normalized = normalize_url(url)
     assert isinstance(normalized, Url)
