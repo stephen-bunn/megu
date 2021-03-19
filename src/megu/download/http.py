@@ -27,6 +27,7 @@ from ..constants import STAGING_DIRPATH
 from ..log import instance as log
 from ..models import Content, HttpResource
 from ..models.content import Manifest, Resource
+from ..utils import allocate_storage
 from .base import BaseDownloader
 
 DEFAULT_CHUNK_SIZE: int = 2 ** 12
@@ -123,7 +124,7 @@ class HttpDownloader(BaseDownloader):
 
         if "content-length" in response.headers:
             total_size = int(response.headers["content-length"])
-            self.allocate_storage(to_path, total_size)
+            allocate_storage(to_path, total_size)
 
         with to_path.open("wb") as file_handle:
             for chunk in response.iter_content(chunk_size=chunk_size):
@@ -217,7 +218,7 @@ class HttpDownloader(BaseDownloader):
         )
         if total_size is not None:
             total_size = int(total_size)
-            self.allocate_storage(to_path, total_size)
+            allocate_storage(to_path, total_size)
 
         # handle the first response
         with to_path.open("wb") as file_handle:
