@@ -52,7 +52,7 @@ class HttpDownloader(BaseDownloader):
                 The HTTP session to use for downloading resources.
         """
 
-        if not hasattr(self, "_session"):
+        if not hasattr(self, "_session"):  # pragma: no cover
             self._session = Session()
         return self._session
 
@@ -384,7 +384,7 @@ class HttpDownloader(BaseDownloader):
             return end <= size if size is not None else True
 
         while _loop_condition(end, size):
-            if start >= end:
+            if start > end:
                 break
 
             yield start, end
