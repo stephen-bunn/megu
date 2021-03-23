@@ -149,7 +149,7 @@ def test_python_path_skips_inserts_if_none_provided():
 @given(pathlib_path())
 def test_python_path_inserts_provided_directories(random_path: Path):
     starting_paths = sys.path.copy()
-    with python_path("..", "~", random_path.as_posix()) as paths:
+    with python_path(Path(".."), Path("~"), random_path) as paths:
         assert len(paths) - len(starting_paths) == 2
 
 
