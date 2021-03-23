@@ -8,7 +8,7 @@ from typing import Iterator
 from unittest.mock import patch
 
 import pytest
-from hypothesis import given, reproduce_failure
+from hypothesis import given
 from hypothesis.strategies import booleans, integers, lists
 from requests import PreparedRequest, Session
 
