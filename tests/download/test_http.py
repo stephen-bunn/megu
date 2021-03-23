@@ -8,7 +8,7 @@ from typing import Iterator
 from unittest.mock import patch
 
 import pytest
-from hypothesis import given
+from hypothesis import given, reproduce_failure
 from hypothesis.strategies import booleans, integers, lists
 from requests import PreparedRequest, Session
 
@@ -71,7 +71,7 @@ def test_iter_range(start: int, end: int, size: int):
 
 @given(
     integers(min_value=0, max_value=1024),
-    integers(min_value=1024, max_value=1025),
+    integers(min_value=1025, max_value=2048),
     integers(min_value=0, max_value=1024),
 )
 def test_iter_range_raises_StopIteration(start: int, end: int, size: int):
