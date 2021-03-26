@@ -30,7 +30,7 @@ from hypothesis.strategies import (
     text,
     uuids,
 )
-from requests import Request
+from requests import Request, Response
 
 from megu.hasher import HashType, hash_io
 from megu.models import Checksum, Content, HttpMethod, HttpResource, Meta, Url
@@ -182,6 +182,33 @@ def requests_request(
         url=draw(url_strategy if url_strategy else urls()),
         headers=draw(headers_strategy if headers_strategy else builds(dict)),
     )
+
+
+@composite
+def requests_response(
+    draw,
+    status_code_strategy: Optional[SearchStrategy[int]] = None,
+    headers_strategy: Optional[SearchStrategy[Dict[str, str]]] = None,
+    url_strategy: Optional[SearchStrategy[str]] = None,
+    raw_strategy: Optional[SearchStrategy[bytes]] = None,
+) -> Response:
+    """Composite strategy for building a basic requests Response instance."""
+
+    resp = Response()
+    resp.__setstate__(  # type: ignore
+        {
+            "status_code": draw(
+                status_code_strategy if status_code_strategy else just(200)
+            ),
+            "url": draw(url_strategy if url_strategy else urls()),
+            "headers": draw(headers_strategy if headers_strategy else builds(dict)),
+            "_content": draw(
+                raw_strategy if raw_strategy else binary(min_size=0, max_size=1024)
+            ),
+        }
+    )
+
+    return resp
 
 
 @composite
