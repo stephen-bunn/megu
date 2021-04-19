@@ -21,14 +21,20 @@ from hypothesis.strategies import (
     lists,
     none,
     one_of,
+    sampled_from,
 )
 from requests import PreparedRequest, Response, Session
 
 from megu.download.http import HttpDownloader
-from megu.models.content import Content
+from megu.models.content import Content, Resource
 from megu.models.http import HttpResource
 
-from ..strategies import megu_content, megu_http_resource, requests_response
+from ..strategies import (
+    megu_content,
+    megu_http_resource,
+    pathlib_path,
+    requests_response,
+)
 
 
 def test_session():
@@ -142,3 +148,84 @@ def test_download_normal(
         # check downloaded content from stream is expected
         temp_file.seek(0)
         assert temp_file.read() == response.content
+
+
+@given(
+    megu_http_resource(),
+    pathlib_path(),
+    integers(1, 1024),
+    requests_response(status_code_strategy=sampled_from([200, 206])),
+)
+def test_download_resource_download_normal(
+    resource: HttpResource,
+    to_path: Path,
+    chunk_size: int,
+    response: Response,
+):
+    downloader = HttpDownloader()
+    with patch.object(
+        downloader, "_request_resource"
+    ) as mock_request_resource, patch.object(
+        downloader, "_download_normal"
+    ) as mock_download_normal, patch.object(
+        downloader, "_download_partial"
+    ) as mock_download_partial:
+        mock_request_resource.return_value = response
+
+        mock_update_hook = MagicMock()
+        downloader.download_resource(
+            resource,
+            0,
+            to_path,
+            chunk_size=chunk_size,
+            update_hook=mock_update_hook,
+        )
+
+        download_mock = (
+            mock_download_normal
+            if response.status_code == 200
+            else mock_download_partial
+        )
+        download_mock.assert_called_once_with(
+            resource,
+            response,
+            to_path,
+            chunk_size=chunk_size,
+            update_hook=mock_update_hook,
+        )
+
+
+@given(
+    megu_http_resource(),
+    pathlib_path(),
+    requests_response(status_code_strategy=sampled_from([300, 204, 400])),
+)
+def test_download_resource_raises_ValueError(
+    resource: HttpResource, to_path: Path, response: Response
+):
+    downloader = HttpDownloader()
+    with patch.object(downloader, "_request_resource") as mock_request_resource:
+        mock_request_resource.return_value = response
+
+        with pytest.raises(ValueError):
+            downloader.download_resource(resource, 0, to_path)
+
+
+@given(
+    megu_content(),
+    requests_response(
+        headers_strategy=dictionaries(
+            keys=just("Content-Length"),
+            values=integers(min_value=1, max_value=1024),
+            min_size=1,
+            max_size=1,
+        )
+    ),
+)
+def test_get_content_size(content: Content, response: Response):
+    downloader = HttpDownloader()
+    with patch.object(downloader.session, "head") as mock_session_head:
+        mock_session_head.return_value = response
+        content_size = downloader._get_content_size(content)
+
+        assert content_size > 0

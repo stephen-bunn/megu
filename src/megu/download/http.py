@@ -411,7 +411,7 @@ class HttpDownloader(BaseDownloader):
         size = 0
 
         for resource in content.resources:
-            if not isinstance(resource, HttpResource):
+            if not isinstance(resource, HttpResource):  # pragma: no cover
                 warnings.warn(
                     f"{self.__class__.__qualname__!s} encountered resource "
                     f"{resource!r}, expected instance of {HttpResource!r}"
