@@ -9,7 +9,6 @@ from typing import Any, Callable
 
 import typer
 
-from ..constants import CONFIG_DIRPATH, LOG_DIRPATH, PLUGIN_DIRPATH, TEMP_DIRPATH
 from ..helpers import noop
 from ..utils import create_required_directories
 
