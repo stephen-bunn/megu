@@ -22,11 +22,12 @@ from hypothesis.strategies import (
     none,
     one_of,
     sampled_from,
+    text,
 )
 from requests import PreparedRequest, Response, Session
 
-from megu.download.http import HttpDownloader
-from megu.models.content import Content, Resource
+from megu.download.http import CONTENT_RANGE_PATTERN, HttpDownloader
+from megu.models.content import Content
 from megu.models.http import HttpResource
 
 from ..strategies import (
@@ -104,7 +105,7 @@ def test_iter_range_raises_StopIteration(start: int, end: int, size: int):
         status_code_strategy=just(200),
         headers_strategy=one_of(
             dictionaries(
-                keys=just("content-length"),
+                keys=just("Content-Length"),
                 values=integers(min_value=1, max_value=1024),
                 min_size=1,
                 max_size=1,
@@ -148,6 +149,100 @@ def test_download_normal(
         # check downloaded content from stream is expected
         temp_file.seek(0)
         assert temp_file.read() == response.content
+
+
+@given(
+    megu_http_resource(),
+    requests_response(
+        headers_strategy=dictionaries(
+            keys=just("content-range"),
+            values=just("bytes 0-256/512"),
+            min_size=1,
+            max_size=1,
+        ),
+        raw_strategy=binary(min_size=256, max_size=256),
+    ),
+    requests_response(
+        headers_strategy=dictionaries(
+            keys=just("content-range"),
+            values=just("bytes 257-512/512"),
+            min_size=1,
+            max_size=1,
+        ),
+        raw_strategy=binary(min_size=255, max_size=255),
+    ),
+    integers(min_value=1, max_value=256),
+    one_of(builds(MagicMock), none()),
+)
+def test_download_partial(
+    resource: HttpResource,
+    response: Response,
+    second_response: Response,
+    chunk_size: int,
+    update_hook: Optional[MagicMock],
+):
+    downloader = HttpDownloader()
+    with patch(
+        "megu.download.http.allocate_storage"
+    ) as mock_allocate_storage, patch.object(
+        downloader, "_request_resource"
+    ) as mock_request_resource, NamedTemporaryFile() as temp_file:
+        mock_request_resource.return_value = second_response
+        to_path = Path(temp_file.name)
+        result = downloader._download_partial(
+            resource, response, to_path, chunk_size=chunk_size, update_hook=update_hook
+        )
+
+        mock_allocate_storage.assert_called_once_with(to_path, 512)
+
+        if update_hook is not None:
+            update_hook.assert_has_calls([call(chunk_size)])
+
+        assert result == to_path
+
+        # check downloaded content from stream is expected
+        temp_file.seek(0)
+        assert temp_file.read() == response.content + second_response.content
+
+
+@given(
+    megu_http_resource(),
+    requests_response(
+        headers_strategy=one_of(
+            builds(dict),
+            dictionaries(
+                keys=just("content-range"),
+                values=one_of(
+                    text().filter(
+                        lambda value: CONTENT_RANGE_PATTERN.match(value) is None
+                    ),
+                    just("bytes 0-*/*"),
+                ),
+                min_size=1,
+                max_size=1,
+            ),
+        )
+    ),
+    pathlib_path(),
+    integers(min_value=1, max_value=256),
+    one_of(builds(MagicMock), none()),
+)
+def test_download_partial_fallback(
+    resource: HttpResource,
+    response: Response,
+    to_path: Path,
+    chunk_size: int,
+    update_hook: Optional[MagicMock],
+):
+    downloader = HttpDownloader()
+    with patch.object(downloader, "_download_normal") as mock_download_normal:
+        downloader._download_partial(
+            resource, response, to_path, chunk_size=chunk_size, update_hook=update_hook
+        )
+
+        mock_download_normal.assert_called_once_with(
+            resource, response, to_path, chunk_size=chunk_size, update_hook=update_hook
+        )
 
 
 @given(

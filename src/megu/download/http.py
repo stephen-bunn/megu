@@ -173,6 +173,7 @@ class HttpDownloader(BaseDownloader):
         # standard HTTP 200 downloader callable
         fallback_download = partial(
             self._download_normal,
+            resource,
             response,
             to_path,
             chunk_size=chunk_size,
