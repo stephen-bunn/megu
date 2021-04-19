@@ -6,7 +6,7 @@
 
 from unittest.mock import patch
 
-from megu.cli.utils import is_debug_context, setup_app
+from megu.cli.utils import setup_app
 
 
 def test_setup_app():
