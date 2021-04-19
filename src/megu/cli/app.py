@@ -99,38 +99,49 @@ def get(
     )
 
     # discover the appropriate content to download
-    for content in best_content(iter_content(url, plugin)):
-        with build_progress(
-            ctx,
-            report=False,
-            total=content.size,
-            desc=f"  {Colors.info | content.filename} {Symbols.right_arrow}",
-            bar_format="{desc} {percentage:0.1f}%",
-        ) as progress:
-            # verify content file doesn't already exist
-            to_path = Path(to_dir, content.filename).expanduser().absolute()
-            if to_path.exists():
-                # if no checksums are defined, let's assume the file is valid
-                if len(content.checksums) <= 0:
-                    progress.bar_format = "{desc} " + (
-                        Colors.error | f"{to_path.as_posix()} exists"
-                    )
-                    continue
+    try:
+        for content in best_content(iter_content(url, plugin)):
+            with build_progress(
+                ctx,
+                report=False,
+                total=content.size,
+                desc=f"  {Colors.info | content.filename} {Symbols.right_arrow}",
+                bar_format="{desc} {percentage:0.1f}%",
+            ) as progress:
+                # verify content file doesn't already exist
+                to_path = Path(to_dir, content.filename).expanduser().absolute()
+                if to_path.exists():
+                    # if no checksums are defined, let's assume the file is valid
+                    if len(content.checksums) <= 0:
+                        progress.bar_format = "{desc} " + (
+                            Colors.error | f"{to_path.as_posix()} exists"
+                        )
+                        continue
 
-                # if checksums are defined, validate the file against one of them
-                first_checksum = content.checksums[0]
-                hash_type = HashType(first_checksum.type)
-                if hash_file(to_path, {hash_type})[hash_type] == first_checksum.hash:
-                    progress.bar_format = "{desc} " + (
-                        Colors.error | f"{to_path.as_posix()} exists"
-                    )
-                    continue
+                    # if checksums are defined, validate the file against one of them
+                    first_checksum = content.checksums[0]
+                    hash_type = HashType(first_checksum.type)
+                    if (
+                        hash_file(to_path, {hash_type})[hash_type]
+                        == first_checksum.hash
+                    ):
+                        progress.bar_format = "{desc} " + (
+                            Colors.error | f"{to_path.as_posix()} exists"
+                        )
+                        continue
 
-            # get the appropriate downloader
-            downloader = get_downloader(content)
-            manifest = downloader.download_content(content, update_hook=progress.update)
-            final_path = merge_manifest(plugin, manifest, to_path)
-            progress.bar_format = f"{{desc}} {Colors.success | final_path.as_posix()}"
+                # get the appropriate downloader
+                downloader = get_downloader(content)
+                manifest = downloader.download_content(
+                    content, update_hook=progress.update
+                )
+                final_path = merge_manifest(plugin, manifest, to_path)
+                progress.bar_format = (
+                    f"{{desc}} {Colors.success | final_path.as_posix()}"
+                )
+    except Exception as exc:
+        echo(Colors.error | str(exc))
+        raise
 
 
 @app.command("show")
@@ -156,9 +167,13 @@ def show(
         f"{Colors.debug | plugin.domains}\n\n"
     )
 
-    for content_id, content in groupby(iter_content(url, plugin), lambda c: c.id):
-        echo(f"{Colors.success | content_id}\n")
-        for entry in sorted(content, key=lambda c: c.quality, reverse=True):
-            echo(f"  {format_content(entry)}\n")
+    try:
+        for content_id, content in groupby(iter_content(url, plugin), lambda c: c.id):
+            echo(f"{Colors.success | content_id}\n")
+            for entry in sorted(content, key=lambda c: c.quality, reverse=True):
+                echo(f"  {format_content(entry)}\n")
 
-        echo("\n")
+            echo("\n")
+    except Exception as exc:
+        echo(Colors.error | str(exc))
+        raise
