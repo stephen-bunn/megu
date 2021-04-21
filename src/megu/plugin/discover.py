@@ -103,6 +103,9 @@ def discover_plugins(
 
     package_dirpath = package_dirpath.expanduser().absolute()
     package_dir = package_dirpath.as_posix()
+    if not package_dirpath.is_dir():
+        log.warning(f"Skipping plugin discovery as {package_dir!r} does not exist")
+        return
 
     with python_path(package_dirpath):
         plugin_prefix = f"{APP_NAME!s}_"
