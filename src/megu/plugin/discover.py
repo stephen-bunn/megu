@@ -172,5 +172,9 @@ def iter_available_plugins(
             available plugin modules.
     """
 
+    if not plugin_dirpath.is_dir():
+        log.warning(f"Skipping plugin discovery since {plugin_dirpath} does not exist")
+        return
+
     for dirpath in filter(lambda d: d.is_dir(), plugin_dirpath.iterdir()):
         yield from discover_plugins(package_dirpath=dirpath, plugin_type=plugin_type)
