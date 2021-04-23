@@ -4,6 +4,7 @@
 
 """Contains tests for the Http downloader."""
 
+import platform
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Iterator, Optional
@@ -99,6 +100,10 @@ def test_iter_range_raises_StopIteration(start: int, end: int, size: int):
         next(downloader._iter_ranges(start, end, size=size))
 
 
+@pytest.mark.skipif(
+    platform.system().lower() == "windows",
+    reason="Github Actions CI does not have access to temporary diretory for Windows",
+)
 @given(
     megu_http_resource(),
     requests_response(
@@ -151,6 +156,10 @@ def test_download_normal(
         assert temp_file.read() == response.content
 
 
+@pytest.mark.skipif(
+    platform.system().lower() == "windows",
+    reason="Github Actions CI does not have access to temporary diretory for Windows",
+)
 @given(
     megu_http_resource(),
     requests_response(
