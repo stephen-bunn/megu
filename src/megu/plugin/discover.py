@@ -7,7 +7,6 @@
 import importlib
 import inspect
 import pkgutil
-import sys
 from pathlib import Path
 from types import ModuleType
 from typing import Generator, List, Tuple, Type

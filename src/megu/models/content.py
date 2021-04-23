@@ -16,12 +16,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from furl.furl import furl
-from pydantic import AnyHttpUrl, BaseModel, Field
+from pydantic import BaseModel, Field
 
 from ..hasher import HashType
-
-Url = furl
+from .types import Url
 
 
 class Checksum(BaseModel):
@@ -108,7 +106,7 @@ class Meta(BaseModel):
         title="Filename",
         description="The file name of the content if available.",
     )
-    thumbnail: Optional[AnyHttpUrl] = Field(
+    thumbnail: Optional[Url] = Field(
         default=None,
         title="Thumbnail",
         description="The HTTP URL for the content's thumbnail if available.",
@@ -157,7 +155,8 @@ class Content(BaseModel):
             The plugin-defined content-unique identifier for the content.
         url (str):
             The absolute URL from where the plugin extracted the content.
-            This URL string gets translated into a Pydantic_ ``AnyHttpUrl`` instance.
+            This URL string gets translated into a :class:`~megu.models.types.Url`
+            instance.
         quality (float):
             The plugin-defined arbitrary quality of the content.
         size (int):
@@ -188,7 +187,7 @@ class Content(BaseModel):
         descripion="The unique identifier of the content.",
         min_length=1,
     )
-    url: AnyHttpUrl = Field(
+    url: Url = Field(
         title="URL",
         description="The source URL the content was extracted from.",
     )

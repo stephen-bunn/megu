@@ -11,13 +11,14 @@ from io import BytesIO
 from typing import Callable, Optional
 
 from cached_property import cached_property
-from pydantic import AnyHttpUrl, Field
+from pydantic import Field
 from requests import PreparedRequest
 from requests.sessions import Request
 
 from ..hasher import HashType, hash_io
 from ..log import instance as log
 from .content import Resource
+from .types import Url
 
 
 class HttpMethod(Enum):
@@ -42,7 +43,8 @@ class HttpResource(Resource):
             The HTTP method that should be used to fetch this resource.
         url (str):
             The URL that should be used to fetch this resource.
-            This URL string gets translated into a Pydantic_ ``AnyHttpUrl`` instance.
+            This URL string gets translated into a :class:`~megu.models.types.Url`
+            instance.
         headers (dict):
             The dictionary of headers to use to fetch this resource (if any).
         data (Optional[bytes], optional):
@@ -62,7 +64,7 @@ class HttpResource(Resource):
         title="Method",
         description="HTTP Method to fetch the resource URL.",
     )
-    url: AnyHttpUrl = Field(
+    url: Url = Field(
         title="URL",
         description="The resource URL to fetch.",
     )
