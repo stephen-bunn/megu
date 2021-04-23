@@ -17,4 +17,6 @@ yaspin
 humanfriendly
 diskcache
 appdirs
+environ-config
+attrs
 -e git+https://github.com/stephen-bunn/sphinx_rtd_theme.git@megu#egg=sphinx_rtd_theme
