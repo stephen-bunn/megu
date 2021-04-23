@@ -9,21 +9,14 @@ These helper/utility functions should **not** be exposed to plugins.
 
 from pathlib import Path
 
-from megu.constants import (
-    CACHE_DIRPATH,
-    CONFIG_DIRPATH,
-    LOG_DIRPATH,
-    PLUGIN_DIRPATH,
-    TEMP_DIRPATH,
-)
-from megu.log import instance as log
+from .config import instance as config
+from .log import instance as log
 
 REQUIRED_DIRECTORIES = (
-    CACHE_DIRPATH,
-    CONFIG_DIRPATH,
-    LOG_DIRPATH,
-    PLUGIN_DIRPATH,
-    TEMP_DIRPATH,
+    config.cache_dir,
+    config.log_dir,
+    config.plugin_dir,
+    config.temp_dir,
 )
 
 
@@ -33,7 +26,7 @@ def create_required_directories():
     for required_dirpath in REQUIRED_DIRECTORIES:
         if not required_dirpath.is_dir():
             log.info(f"Creating required directory at {required_dirpath}")
-            required_dirpath.mkdir(mode=0o777)
+            required_dirpath.mkdir(mode=0o777, parents=True)
 
 
 def allocate_storage(to_path: Path, size: int) -> Path:
