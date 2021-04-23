@@ -36,6 +36,8 @@ from megu.hasher import HashType, hash_io
 from megu.models import Checksum, Content, HttpMethod, HttpResource, Meta, Url
 from megu.models.content import Resource
 
+# Using a port of 0 is "technically" valid in the RFC, but not valid for parsers
+DEFAULT_URL_STRATEGY = urls().filter(lambda x: ":0" not in x)
 VALID_MIMETYPES = (
     "image/bmp",
     "image/gif",
@@ -179,7 +181,7 @@ def requests_request(
             if method_strategy
             else sampled_from(list(HttpMethod.__members__.keys()))
         ),
-        url=draw(url_strategy if url_strategy else urls()),
+        url=draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY),
         headers=draw(headers_strategy if headers_strategy else builds(dict)),
     )
 
@@ -200,7 +202,7 @@ def requests_response(
             "status_code": draw(
                 status_code_strategy if status_code_strategy else just(200)
             ),
-            "url": draw(url_strategy if url_strategy else urls()),
+            "url": draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY),
             "headers": draw(headers_strategy if headers_strategy else builds(dict)),
             "_content": draw(
                 raw_strategy if raw_strategy else binary(min_size=0, max_size=1024)
@@ -215,9 +217,7 @@ def requests_response(
 def megu_url(draw, url_strategy: Optional[SearchStrategy[str]] = None) -> Url:
     """Composite strategy for building a megu Url model."""
 
-    return Url(
-        draw(url_strategy if url_strategy else urls().filter(lambda u: ":0/" not in u))
-    )
+    return Url(draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY))
 
 
 @composite
@@ -278,7 +278,9 @@ def megu_meta(
             filename_strategy if filename_strategy else optional_str_strategy
         ),
         thumbnail=draw(
-            thumbnail_strategy if thumbnail_strategy else one_of(urls(), none())
+            thumbnail_strategy
+            if thumbnail_strategy
+            else one_of(DEFAULT_URL_STRATEGY, none())
         ),
     )
 
@@ -296,7 +298,7 @@ def megu_http_resource(
 
     return HttpResource(
         method=draw(method_strategy if method_strategy else sampled_from(HttpMethod)),
-        url=draw(url_strategy if url_strategy else urls()),
+        url=draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY),
         headers=draw(headers_strategy if headers_strategy else builds(dict)),
         data=draw(data_strategy if data_strategy else none()),
         auth=draw(auth_strategy if auth_strategy else none()),
@@ -321,7 +323,7 @@ def megu_content(
 
     return Content(
         id=str(draw(id_strategy if id_strategy else uuids(version=4))),
-        url=draw(url_strategy if url_strategy else urls()),
+        url=draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY),
         quality=draw(
             quality_strategy
             if quality_strategy
