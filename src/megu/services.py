@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 from typing import Generator, Optional, Union
 
-from .constants import PLUGIN_DIRPATH
+from .config import instance as config
 from .download import BaseDownloader, discover_downloaders
 from .download.http import HttpDownloader
 from .helpers import temporary_file
@@ -56,7 +56,7 @@ def get_plugin(
     """
 
     url = normalize_url(url)
-    dirpath: Path = PLUGIN_DIRPATH
+    dirpath: Path = config.plugin_dir
     if plugin_dirpath is not None and plugin_dirpath.is_dir():
         dirpath = plugin_dirpath.absolute()
 

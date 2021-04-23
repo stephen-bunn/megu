@@ -42,11 +42,11 @@ from typing import Any, Dict, List
 
 import loguru
 
-from .constants import APP_NAME, APP_VERSION, LOG_DIRPATH
+from .config import instance as config
 
 DEFAULT_LOG_FORMAT = "<dim>{time}</dim> <level>{level:8s}</level> {message}"
 DEFAULT_RECORD_HANDLER = dict(
-    sink=LOG_DIRPATH.joinpath(f"{APP_NAME!s}.log").as_posix(),
+    sink=config.log_dir.joinpath(f"{config.app_name!s}.log").as_posix(),
     level="DEBUG",
     format=DEFAULT_LOG_FORMAT,
     rotation="00:00",
@@ -98,7 +98,7 @@ def configure_logger(
         handlers.append(DEFAULT_RECORD_HANDLER)
 
     logger.configure(handlers=handlers)
-    return logger.bind(version=APP_VERSION)
+    return logger.bind(version=config.app_version)
 
 
 @lru_cache(maxsize=2)

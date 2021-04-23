@@ -75,7 +75,7 @@ def test_disk_cache_raises_ValueError(cache_name: str):
 def test_disk_cache(cache_name: str):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dirpath = Path(temp_dir)
-        with patch("megu.helpers.CACHE_DIRPATH", temp_dirpath):
+        with patch("megu.helpers.config.cache_dir", temp_dirpath):
             diskcache_dirpath = temp_dirpath.joinpath(cache_name)
             assert diskcache_dirpath.is_dir() == False
             diskcache_dirpath.mkdir(parents=True)
@@ -89,7 +89,7 @@ def test_disk_cache(cache_name: str):
 def test_disk_cache_creates_directory(cache_name: str):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_dirpath = Path(temp_dir)
-        with patch("megu.helpers.CACHE_DIRPATH", temp_dirpath):
+        with patch("megu.helpers.config.cache_dir", temp_dirpath):
             diskcache_dirpath = temp_dirpath.joinpath(cache_name)
             assert diskcache_dirpath.is_dir() == False
 

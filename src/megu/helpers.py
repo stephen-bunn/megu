@@ -10,13 +10,13 @@ from contextlib import contextmanager
 from os import PathLike
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import IO, Generator, List, Tuple
+from typing import IO, Generator, List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 from diskcache import Cache
 from requests import Session
 
-from .constants import CACHE_DIRPATH, TEMP_DIRPATH
+from .config import instance as config
 from .log import instance as log
 
 DISK_CACHE_PATTERN = re.compile(r"^[a-z]+[a-z0-9_-]{3,31}[a-z0-9]$")
@@ -101,7 +101,7 @@ def disk_cache(cache_name: str) -> Generator[Cache, None, None]:
             f"{DISK_CACHE_PATTERN.pattern!r}"
         )
 
-    diskcache_dirpath = CACHE_DIRPATH.joinpath(cache_name)
+    diskcache_dirpath = config.cache_dir.joinpath(cache_name)
     if not diskcache_dirpath.is_dir():
         log.debug(f"Creating a new diskcache at {diskcache_dirpath}")
         diskcache_dirpath.mkdir(mode=0o777, parents=True)
@@ -114,7 +114,7 @@ def disk_cache(cache_name: str) -> Generator[Cache, None, None]:
 def temporary_file(
     prefix: str,
     mode: str,
-    dirpath: Path = TEMP_DIRPATH,
+    dirpath: Optional[Path] = None,
 ) -> Generator[Tuple[Path, IO], None, None]:
     """Context manager for opening a temporary file at the appropriate location.
 
@@ -136,6 +136,9 @@ def temporary_file(
             A tuple containing the temporary file's path and the file handle.
     """
 
+    if dirpath is None:
+        dirpath = config.temp_dir
+
     if not dirpath.is_dir():
         raise NotADirectoryError(f"No such directory {dirpath} exists")
 
@@ -150,7 +153,7 @@ def temporary_file(
 
 @contextmanager
 def temporary_directory(
-    prefix: str, dirpath: Path = TEMP_DIRPATH
+    prefix: str, dirpath: Optional[Path] = None
 ) -> Generator[Path, None, None]:
     """Context manager for creating a temporary directory at the appropriate location.
 
@@ -169,6 +172,9 @@ def temporary_directory(
         :class:`~pathlib.Path`:
             The temporary directory's path.
     """
+
+    if dirpath is None:
+        dirpath = config.temp_dir
 
     if not dirpath.is_dir():
         raise NotADirectoryError(f"No such directory {dirpath} exists")

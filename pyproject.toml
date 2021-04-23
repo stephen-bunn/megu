@@ -71,6 +71,8 @@ yaspin = "^1.4.0"
 humanfriendly = "^9.1"
 diskcache = "^5.2.1"
 appdirs = "^1.4.4"
+environ-config = "^21.1.0"
+attrs = "^20.3.0"
 
 [tool.poetry.dev-dependencies]
 black = "^20.8b1"
