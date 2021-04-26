@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from ..constants import PLUGIN_DIRPATH
+from ..constants import PLUGIN_DIR
 from ..helpers import temporary_directory
 from ..log import instance as log
 from .discover import discover_plugins
@@ -61,7 +61,7 @@ def _get_package_name(dirpath: Path) -> Optional[str]:
     return None
 
 
-def remove_plugin(package: str, plugin_dirpath: Path = PLUGIN_DIRPATH):
+def remove_plugin(package: str, plugin_dirpath: Path = PLUGIN_DIR):
     """Remove the given package if it exists in the plugin directory.
 
     Args:
@@ -69,7 +69,7 @@ def remove_plugin(package: str, plugin_dirpath: Path = PLUGIN_DIRPATH):
             The name of the package to remove.
         plugin_dirpath (~pathlib.Path, optional):
             The plugin directory to remove the package from.
-            Defaults to :attr:`~megu.constants.PLUGIN_DIRPATH`.
+            Defaults to :attr:`~megu.constants.PLUGIN_DIR`.
 
     Raises:
         NotADirectoryError:
@@ -87,7 +87,7 @@ def remove_plugin(package: str, plugin_dirpath: Path = PLUGIN_DIRPATH):
 
 def add_plugin(
     package: str,
-    plugin_dirpath: Path = PLUGIN_DIRPATH,
+    plugin_dirpath: Path = PLUGIN_DIR,
     silence_subprocess: bool = False,
 ) -> Path:
     """Install a plugin utilizing pip.
@@ -103,7 +103,7 @@ def add_plugin(
             plugin.
         plugin_dirpath (~pathlib.Path, optional):
             The directory the plugin should be installed to.
-            Defaults to :attr:`~megu.constants.PLUGIN_DIRPATH`.
+            Defaults to :attr:`~megu.constants.PLUGIN_DIR`.
         silence_subprocess (bool):
             If set to ``True``, will redirect output of subprocess calls to /dev/null.
             Defaults to ``False``.

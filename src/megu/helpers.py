@@ -125,7 +125,7 @@ def temporary_file(
             The mode the file should be opened with.
         dirpath (~pathlib.Path, optional):
             The directory path the temporary file should be opened in.
-            Defaults to :attr:`~megu.constants.TEMP_DIRPATH`.
+            Defaults to :attr:`~megu.constants.TEMP_DIR`.
 
     Raises:
         NotADirectoryError:
@@ -162,7 +162,7 @@ def temporary_directory(
             The prefix of the temporary directory.
         dirpath (~pathlib.Path, optional):
             The directory path the temporary directory should be created in.
-            Defaults to :attr:`~megu.constants.TEMP_DIRPATH`.
+            Defaults to :attr:`~megu.constants.TEMP_DIR`.
 
     Raises:
         NotADirectoryError:

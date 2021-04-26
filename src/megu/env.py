@@ -9,16 +9,16 @@ from pathlib import Path
 
 import environ
 
-from .constants import CACHE_DIRPATH, LOG_DIRPATH, PLUGIN_DIRPATH
+from .constants import CACHE_DIR, LOG_DIR, PLUGIN_DIR
 
 
 @environ.config(prefix="MEGU")
-class MeguConfig:
+class MeguEnv:
     """Defines available environment configuration values."""
 
-    cache_dir: Path = environ.var(default=CACHE_DIRPATH, converter=Path)
-    log_dir: Path = environ.var(default=LOG_DIRPATH, converter=Path)
-    plugin_dir: Path = environ.var(default=PLUGIN_DIRPATH, converter=Path)
+    cache_dir: Path = environ.var(default=CACHE_DIR, converter=Path)
+    log_dir: Path = environ.var(default=LOG_DIR, converter=Path)
+    plugin_dir: Path = environ.var(default=PLUGIN_DIR, converter=Path)
 
 
-instance: MeguConfig = environ.to_config(MeguConfig, environ=os.environ)
+instance: MeguEnv = environ.to_config(MeguEnv, environ=os.environ)

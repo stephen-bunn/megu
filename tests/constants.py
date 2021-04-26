@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-ASSETS_DIRPATH = Path(__file__).parent.joinpath("assets").absolute()
-PLUGINS_DIRPATH = ASSETS_DIRPATH.joinpath("plugins")
+ASSETS_DIR = Path(__file__).parent.joinpath("assets").absolute()
+PLUGINS_DIR = ASSETS_DIR.joinpath("plugins")
 
 PLUGIN_GOOD = "megu_good_plugin"

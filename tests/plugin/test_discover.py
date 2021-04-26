@@ -26,8 +26,8 @@ from ..assets.plugins.megu_bad_plugin import MeguBadPlugin
 from ..assets.plugins.megu_good_plugin import MeguGoodPlugin, MeguGoodPlugin2
 from ..strategies import pythonic_name
 
-ASSET_PLUGIN_DIRPATH = Path(__file__).parent.parent.joinpath("assets", "plugins")
-_plugin_context = partial(python_path, ASSET_PLUGIN_DIRPATH)
+ASSET_PLUGIN_DIR = Path(__file__).parent.parent.joinpath("assets", "plugins")
+_plugin_context = partial(python_path, ASSET_PLUGIN_DIR)
 
 
 def test_load_plugin():
@@ -55,7 +55,7 @@ def test_load_plugin_module_raises_PluginFailure(plugin_name: str):
 
 
 def test_discover_plugins():
-    discovered_generator = discover_plugins(ASSET_PLUGIN_DIRPATH)
+    discovered_generator = discover_plugins(ASSET_PLUGIN_DIR)
     assert isinstance(discovered_generator, Generator)
     discovered = list(discovered_generator)
     assert len(discovered) == 1
@@ -67,7 +67,7 @@ def test_discover_plugins():
 
 
 def test_iter_available_plugins():
-    iterator = iter_available_plugins(ASSET_PLUGIN_DIRPATH.parent)
+    iterator = iter_available_plugins(ASSET_PLUGIN_DIR.parent)
     assert isinstance(iterator, Generator)
     discovered = list(iterator)
     assert len(discovered) == 1

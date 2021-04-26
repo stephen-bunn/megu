@@ -19,5 +19,5 @@ def test_APP_VERSION_defined():
     assert len(constants.APP_VERSION) > 0
 
 
-def test_CONFIG_DIRPATH_defined():
-    assert isinstance(constants.CONFIG_DIRPATH, Path)
+def test_CONFIG_DIR_defined():
+    assert isinstance(constants.CONFIG_DIR, Path)

@@ -10,17 +10,17 @@ Attributes:
         Should always be ``megu``.
     APP_VERSION (str):
         The current version of the megu application.
-    CONFIG_DIRPATH (~pathlib.Path):
+    CONFIG_DIR (~pathlib.Path):
         The directory path where the application configuration lives.
-    PLUGIN_DIRPATH (~pathlib.Path):
+    PLUGIN_DIR (~pathlib.Path):
         The directory path where plugins are installed to.
-    CACHE_DIRPATH (~pathlib.Path):
+    CACHE_DIR (~pathlib.Path):
         The directory path where the application cache lives.
-    LOG_DIRPATH (~pathlib.Path):
+    LOG_DIR (~pathlib.Path):
         The directory path where the application logs live.
-    TEMP_DIRPATH (~pathlib.Path):
+    TEMP_DIR (~pathlib.Path):
         The directory path where the application temporary files live.
-    STAGING_DIRPATH (~pathlib.Path):
+    STAGING_DIR (~pathlib.Path):
         The directory path where the application downloads content fragments to.
 """
 
@@ -34,9 +34,9 @@ APP_VERSION = "0.1.0"
 
 app_dirs = appdirs.AppDirs(appname=APP_NAME)
 
-CONFIG_DIRPATH = Path(app_dirs.user_config_dir).absolute()
-CACHE_DIRPATH = Path(app_dirs.user_cache_dir).absolute()
-LOG_DIRPATH = Path(app_dirs.user_log_dir).absolute()
-PLUGIN_DIRPATH = CONFIG_DIRPATH.joinpath("plugins")
-TEMP_DIRPATH = Path(tempfile.gettempdir()).joinpath(APP_NAME)
-STAGING_DIRPATH = TEMP_DIRPATH.joinpath(".staging")
+CONFIG_DIR = Path(app_dirs.user_config_dir).absolute()
+CACHE_DIR = Path(app_dirs.user_cache_dir).absolute()
+LOG_DIR = Path(app_dirs.user_log_dir).absolute()
+PLUGIN_DIR = CONFIG_DIR.joinpath("plugins")
+TEMP_DIR = Path(tempfile.gettempdir()).joinpath(APP_NAME)
+STAGING_DIR = TEMP_DIR.joinpath(".staging")

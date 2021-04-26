@@ -29,7 +29,7 @@ from .ui import build_progress, format_content
 from .utils import get_echo, setup_app
 
 LOG_VERBOSITY_LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
-DEFAULT_DOWNLOAD_DIRPATH = Path.home().joinpath("Downloads")
+DEFAULT_DOWNLOAD_DIR = Path.home().joinpath("Downloads")
 
 app = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
 app.add_typer(plugin_app, name="plugin")
@@ -75,7 +75,7 @@ def get(
     ctx: typer.Context,
     from_url: str = typer.Argument(..., metavar="URL"),
     to_dir: str = typer.Option(
-        DEFAULT_DOWNLOAD_DIRPATH.as_posix(),
+        DEFAULT_DOWNLOAD_DIR.as_posix(),
         "--dir",
         "-d",
         help="The directory to save to.",

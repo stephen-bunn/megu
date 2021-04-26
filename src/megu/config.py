@@ -8,7 +8,7 @@ from pathlib import Path
 
 import attr
 
-from .constants import APP_NAME, APP_VERSION, STAGING_DIRPATH, TEMP_DIRPATH
+from .constants import APP_NAME, APP_VERSION, STAGING_DIR, TEMP_DIR
 from .env import instance as env
 
 
@@ -18,8 +18,8 @@ class MeguConfig:
 
     app_name = APP_NAME
     app_version = APP_VERSION
-    temp_dir = TEMP_DIRPATH
-    staging_dir = STAGING_DIRPATH
+    temp_dir = TEMP_DIR
+    staging_dir = STAGING_DIR
 
     cache_dir: Path = attr.ib(default=env.cache_dir)
     log_dir: Path = attr.ib(default=env.log_dir)

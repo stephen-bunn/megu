@@ -18,7 +18,7 @@ from hypothesis import given
 from hypothesis.strategies import dictionaries, from_regex, lists, sampled_from, text
 from requests import Session
 
-from megu.constants import TEMP_DIRPATH
+from megu.constants import TEMP_DIR
 from megu.helpers import (
     DISK_CACHE_PATTERN,
     disk_cache,
@@ -109,8 +109,8 @@ def test_temporary_file_raises_NotADirectoryError(
 
 @given(pythonic_name(), sampled_from(["w", "wb"]))
 def test_temporary_file(prefix: str, mode: str):
-    if not TEMP_DIRPATH.is_dir():
-        TEMP_DIRPATH.mkdir()
+    if not TEMP_DIR.is_dir():
+        TEMP_DIR.mkdir()
 
     with temporary_file(prefix, mode) as temp_file:
         (temp_filepath, temp_io) = temp_file
@@ -130,8 +130,8 @@ def test_temporary_directory_raises_NotADirectoryError(prefix: str, dirpath: Pat
 
 @given(pythonic_name())
 def test_temporary_directory(prefix: str):
-    if not TEMP_DIRPATH.is_dir():
-        TEMP_DIRPATH.mkdir()
+    if not TEMP_DIR.is_dir():
+        TEMP_DIR.mkdir()
 
     with temporary_directory(prefix) as temp_dirpath:
         assert isinstance(temp_dirpath, Path)

@@ -11,7 +11,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Generator, List, Tuple, Type
 
-from ..constants import APP_NAME, PLUGIN_DIRPATH
+from ..constants import APP_NAME, PLUGIN_DIR
 from ..exceptions import PluginFailure
 from ..helpers import python_path
 from ..log import instance as log
@@ -152,7 +152,7 @@ def discover_plugins(
 
 
 def iter_available_plugins(
-    plugin_dirpath: Path = PLUGIN_DIRPATH,
+    plugin_dirpath: Path = PLUGIN_DIR,
     plugin_type: Type = BasePlugin,
 ) -> Generator[Tuple[str, List[BasePlugin]], None, None]:
     """Get all available plugins from the given plugin directory.
@@ -160,7 +160,7 @@ def iter_available_plugins(
     Args:
         plugin_dirpath (~pathlib.Path, optional):
             The path to the directory where plugins are installed.
-            Defaults to :attr:`~megu.constants.PLUGIN_DIRPATH`.
+            Defaults to :attr:`~megu.constants.PLUGIN_DIR`.
         plugin_type (~typing.Type, optional):
             The type of plugins to load.
             Defaults to :class:`~megu.plugin.BasePlugin`.

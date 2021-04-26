@@ -6,7 +6,7 @@
 
 import typer
 
-from ..constants import PLUGIN_DIRPATH
+from ..constants import PLUGIN_DIR
 from ..log import instance as log
 from ..plugin.discover import discover_plugins, iter_available_plugins
 from ..plugin.manage import add_plugin, remove_plugin
@@ -59,10 +59,10 @@ def plugin_list(ctx: typer.Context):
     """List available plugins."""
 
     echo = get_echo(ctx, nl=True)
-    echo(f"List Plugins {Colors.debug | PLUGIN_DIRPATH.as_posix()}\n")
+    echo(f"List Plugins {Colors.debug | PLUGIN_DIR.as_posix()}\n")
 
     plugin_count = 0
-    for package_name, plugins in iter_available_plugins(PLUGIN_DIRPATH):
+    for package_name, plugins in iter_available_plugins(PLUGIN_DIR):
         plugin_count += 1
         display_plugin(ctx, package_name, plugins)
     else:
