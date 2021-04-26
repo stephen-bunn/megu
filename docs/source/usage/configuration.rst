@@ -5,7 +5,7 @@ Configuration
 =============
 
 All configuration used internally by the tool is ready from the
-:class:`megu.config.MeguConfig` instance.
+:class:`~megu.config.MeguConfig` instance.
 This object contains mostly metadata, and some unique temporary directory paths to
 use for storing downloaded artifacts.
 
