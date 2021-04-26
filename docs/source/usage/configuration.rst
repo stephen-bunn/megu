@@ -1,6 +1,3 @@
-.. _configuration:
-.. _appdirs: https://pypi.org/project/appdirs/
-
 Configuration
 =============
 
@@ -10,7 +7,7 @@ This object contains mostly metadata, and some unique temporary directory paths 
 use for storing downloaded artifacts.
 
 Within this config, there are three directories that can be overridden by environment
-variables.
+variables which are defined by :class:`~megu.env.MeguEnv`.
 
 | ``MEGU_PLUGIN_DIR`` **The directory where plugins are stored.**
 | By default this value is set to ``{user config dir}/megu/plugins``.

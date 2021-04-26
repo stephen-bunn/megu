@@ -23,6 +23,7 @@
   font-family: "Crimson Text", sans-serif;
   font-size: 72px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .Main_Description {
@@ -49,6 +50,7 @@
 
   .Main_Title {
     text-align: center;
+    line-height: 1.5;
   }
 }
 

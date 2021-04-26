@@ -16,6 +16,22 @@ from .env import instance as env
 class MeguConfig:
     """Project wide configuration values.
 
+    Attributes:
+        app_name (str):
+            The name of the CLI app.
+        app_version (str):
+            The semver version of the CLI app.
+        temp_dir (~pathlib.Path):
+            The directory where temporary files should be stored.
+        staging_dir (~pathlib.Path):
+            The directory where files can be persisted for staging downloads.
+        cache_dir (~pathlib.Path):
+            The directory where persistent caches should be stored.
+        log_dir (~pathlib.Path):
+            The directory where logs should be stored.
+        plugin_dir (~pathlib.Path):
+            The directory where plugins should be read from.
+
     Parameters:
         cache_dir (~pathlib.Path):
             The directory where persistent caches should be stored.

@@ -5,3 +5,4 @@
 .. _furl: https://github.com/gruns/furl
 .. _tqdm: https://tqdm.github.io/
 .. _yaspin: https://github.com/pavdmyt/yaspin
+.. _appdirs: https://pypi.org/project/appdirs/

@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from ..config import instance as config
 from ..constants import PLUGIN_DIR
 from ..helpers import temporary_directory
 from ..log import instance as log
@@ -61,7 +62,7 @@ def _get_package_name(dirpath: Path) -> Optional[str]:
     return None
 
 
-def remove_plugin(package: str, plugin_dirpath: Path = PLUGIN_DIR):
+def remove_plugin(package: str, plugin_dirpath: Optional[Path] = None):
     """Remove the given package if it exists in the plugin directory.
 
     Args:
@@ -77,6 +78,9 @@ def remove_plugin(package: str, plugin_dirpath: Path = PLUGIN_DIR):
             plugin directory.
     """
 
+    if plugin_dirpath is None:
+        plugin_dirpath = config.plugin_dir
+
     package_dirpath = plugin_dirpath.joinpath(package)
     if not package_dirpath.is_dir():
         raise NotADirectoryError(f"No such directory {package_dirpath!s} exists")
@@ -87,7 +91,7 @@ def remove_plugin(package: str, plugin_dirpath: Path = PLUGIN_DIR):
 
 def add_plugin(
     package: str,
-    plugin_dirpath: Path = PLUGIN_DIR,
+    plugin_dirpath: Optional[Path] = None,
     silence_subprocess: bool = False,
 ) -> Path:
     """Install a plugin utilizing pip.
@@ -112,6 +116,9 @@ def add_plugin(
         ~pathlib.Path:
             The directory the plugin was installed to.
     """
+
+    if plugin_dirpath is None:
+        plugin_dirpath = config.plugin_dir
 
     out_handle = subprocess.DEVNULL if silence_subprocess else sys.stdout
     err_handle = subprocess.DEVNULL if silence_subprocess else sys.stderr

@@ -134,6 +134,12 @@ Megu Package
 .. automodule:: megu.models.http
    :members:
 
+``types``
+~~~~~~~~~
+
+.. automodule:: megu.models.types
+   :members:
+
 ----
 
 ``megu.plugin``
