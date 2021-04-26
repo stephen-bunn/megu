@@ -39,6 +39,7 @@ User Documentation
    :maxdepth: 2
 
    getting-started
+   usage/index
    plugins/index
    contributing
    code-of-conduct

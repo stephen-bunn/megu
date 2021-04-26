@@ -36,6 +36,22 @@ Megu Package
 
 ----
 
+``megu.env``
+------------
+
+.. automodule:: megu.env
+   :members:
+
+----
+
+``megu.config``
+---------------
+
+.. automodule:: megu.config
+   :members:
+
+----
+
 ``megu.download``
 -----------------
 

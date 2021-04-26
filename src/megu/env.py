@@ -14,7 +14,19 @@ from .constants import CACHE_DIR, LOG_DIR, PLUGIN_DIR
 
 @environ.config(prefix="MEGU")
 class MeguEnv:
-    """Defines available environment configuration values."""
+    """Defines available environment configuration values.
+
+    Attributes:
+        cache_dir (~pathlib.Path):
+            The directory where persistent caches should be stored.
+            Read from ``MEGU_CACHE_DIR``.
+        log_dir (~pathlib.Path):
+            The directory where logs should be stored.
+            Read from ``MEGU_LOG_DIR``.
+        plugin_dir (~pathlib.Path):
+            The directory where plugins will be read from.
+            Read from ``MEGU_PLUGIN_DIR``.
+    """
 
     cache_dir: Path = environ.var(default=CACHE_DIR, converter=Path)
     log_dir: Path = environ.var(default=LOG_DIR, converter=Path)

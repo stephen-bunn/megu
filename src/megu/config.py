@@ -14,7 +14,16 @@ from .env import instance as env
 
 @attr.s
 class MeguConfig:
-    """Project wide configuration values."""
+    """Project wide configuration values.
+
+    Parameters:
+        cache_dir (~pathlib.Path):
+            The directory where persistent caches should be stored.
+        log_dir (~pathlib.Path):
+            The directory where logs should be stored.
+        plugin_dir (~pathlib.Path):
+            The directory where plugins should be read from.
+    """
 
     app_name = APP_NAME
     app_version = APP_VERSION
