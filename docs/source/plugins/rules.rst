@@ -13,3 +13,4 @@ Rules
 
 7. Plugins **SHOULD** only use the disk cache if absolutely necessary.
 8. Plugins **SHOULD** avoid parsing HTML using BeautifulSoup_ whenever possible.
+9. Plugins **SHOULD NOT** require API credentials for default functionality.

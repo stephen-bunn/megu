@@ -6,3 +6,4 @@
 .. _tqdm: https://tqdm.github.io/
 .. _yaspin: https://github.com/pavdmyt/yaspin
 .. _appdirs: https://pypi.org/project/appdirs/
+.. _requests: https://docs.python-requests.org/en/master/
