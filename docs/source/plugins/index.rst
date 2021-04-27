@@ -19,6 +19,8 @@ We will cover how plugins handle each of these concerns, but first there are a f
 
 .. include:: writing-plugins.rst
 
+.. include:: helpers.rst
+
 .. include:: examples.rst
 
 ----

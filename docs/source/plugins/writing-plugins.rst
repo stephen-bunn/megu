@@ -268,6 +268,65 @@ Before we get into the individual properties, checkout the example below:
    Keep it reasonable though.
 
 
+So we end up with an implementation of :meth:`~megu.plugin.base.BasePlugin.extract_content` that looks like the following:
+
+.. code-block:: python
+
+   class ThreadPlugin(BasePlugin):
+
+      name = "4chan Thread"
+      domains = {"boards.4chan.org", "boards.4channel.org"}
+      pattern = re.compile(r"^https?:\/\/(?:(?:www|boards)\.)?4chan(?:nel)?\.org\/(?P<board>\w+)\/thread\/(?P<thread>\d+)")
+
+      def can_handle(self, url: Url) -> bool:
+         return self.pattern.match(url.url) is not None
+
+      def extract_content(self, url):
+         match = self.pattern.match(url.url)
+         if not match:
+            raise ValueError(f"Failed to match url {url.url}")
+
+         with http_session() as session:
+            groups = match.groupdict()
+
+            api_response = session.get(f"https://a.4cdn.org/{groups['board']}/thread/{groups['thread']}.json")
+            if api_response.status_code != 200:
+               raise ValueError(f"Failed to fetch API details for 4chan board {groups['board']} thread {groups['thread']}")
+
+            for post in api_response.json()["posts"]:
+               # skip posts with no file details
+               if post.get("filename") is None or post.get("ext") is None:
+                  continue
+
+               # construct HttpResource for image
+               image_url = f"https://i.4cdn.org/{groups['board']}/{post['tim']}{post['ext']}"
+               image_resource = HttpResource(method=HttpMethod.GET, url=image_url)
+
+               # construct Meta for content
+               meta = Meta(
+                  id=str(post["no"]),
+                  description=post.get("com"),
+                  publisher=post.get("name"),
+                  published_at=(datetime.fromtimestamp(post["time"]) if "time" in post else None),
+                  filename=post.get("filename"),
+                  thumbnail=f"https://i.4cdn.org/{groups['board']}/{post['tim']}s.jpg"
+               )
+
+               # get the MD5 checksum for image
+               image_checksum = Checksum(type=HashType.MD5, hash=b64decode(post["md5"]).hex())
+
+               yield Content(
+                  id=f"4chan-{groups['board']}-{post['no']}",
+                  url=url.url,
+                  quality=1.0,
+                  size=post["fsize"],
+                  type=guess_type(image_url),
+                  resources=[image_resource],
+                  meta=meta,
+                  checksums=[image_checksum],
+                  extra=post
+               )
+
 Now that we have yielded the fully constructed content, the rest of the framework can take it from there.
 
 Merge Manifest
@@ -285,7 +344,7 @@ Finally, the method should return the path that the manifest artifacts were merg
 
    def merge_manifest(self, manifest: Manifest, to_path: Path) -> Path:
       if len(manifest.artifacts) != 1:
-         raise ValueError(f"{self.__class__.__name__} expects only one artifacts")
+         raise ValueError(f"{self.__class__.__name__} expects only one artifact")
 
       _, only_artifact = manifest.artifacts[0]
       only_artifact.rename(to_path)
@@ -294,3 +353,34 @@ Finally, the method should return the path that the manifest artifacts were merg
 
 
 This merging process could be much more complicated depending on the complexity of the resource that were requested in the content.
+For example, if we were downloading fragments of video, we might need to utilize FFMPEG to merge the fragments together.
+
+So we finally end up with a plugin that looks like the following:
+
+.. code-block:: python
+
+   class ThreadPlugin(BasePlugin):
+
+      name = "4chan Thread"
+      domains = {"boards.4chan.org", "boards.4channel.org"}
+      pattern = re.compile(r"^https?:\/\/(?:(?:www|boards)\.)?4chan(?:nel)?\.org\/(?P<board>\w+)\/thread\/(?P<thread>\d+)")
+
+      def can_handle(self, url: Url) -> bool:
+         return self.pattern.match(url.url) is not None
+
+      def extract_content(self, url):
+         # ... <snipped> ...
+         ...
+
+      def merge_manifest(self, manifest: Manifest, to_path: Path) -> Path:
+         if len(manifest.artifacts) != 1:
+            raise ValueError(f"{self.__class__.__name__} expects only one artifact")
+
+         _, only_artifact = manifest.artifacts[0]
+         only_artifact.rename(to_path)
+
+         return to_path
+
+
+This plugin of course is very naive and is likely not considering all the different types of responses that could occur against the API.
+For a more concrete example of plugins, checkout the following examples.
