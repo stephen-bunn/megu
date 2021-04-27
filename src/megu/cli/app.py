@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 # Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
-# ISC License <https://choosealicense.com/licenses/isc>
+# GPLv3 License <https://choosealicense.com/licenses/gpl-3.0/>
 
 """The main module for the CLI app."""
 

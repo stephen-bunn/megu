@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Plugin-centric HTTP media extractor and downloader framework."
 authors = ["Stephen Bunn <stephen@bunn.io>"]
 maintainers = []
-license = "ISC"
+license = "GPL-3.0-or-later"
 packages = [
   { include = "megu", from = "src" }
 ]
@@ -24,7 +24,7 @@ keywords = [
   "download"
 ]
 classifiers = [
-  "License :: OSI Approved :: ISC License (ISCL)",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Operating System :: POSIX",
