@@ -9,9 +9,9 @@ import inspect
 import pkgutil
 from pathlib import Path
 from types import ModuleType
-from typing import Generator, List, Tuple, Type
+from typing import Generator, List, Optional, Tuple, Type
 
-from ..constants import APP_NAME, PLUGIN_DIR
+from ..config import instance as config
 from ..exceptions import PluginFailure
 from ..helpers import python_path
 from ..log import instance as log
@@ -107,7 +107,7 @@ def discover_plugins(
         return
 
     with python_path(package_dirpath):
-        plugin_prefix = f"{APP_NAME!s}_"
+        plugin_prefix = f"{config.app_name!s}_"
 
         log.info(f"Discovering plugins in {package_dir!r}")
         for _, plugin_name, _ in pkgutil.iter_modules([package_dir]):
@@ -152,7 +152,7 @@ def discover_plugins(
 
 
 def iter_available_plugins(
-    plugin_dirpath: Path = PLUGIN_DIR,
+    plugin_dirpath: Optional[Path] = None,
     plugin_type: Type = BasePlugin,
 ) -> Generator[Tuple[str, List[BasePlugin]], None, None]:
     """Get all available plugins from the given plugin directory.
@@ -170,6 +170,9 @@ def iter_available_plugins(
             A tuple of the plugin name and the instances of exported plugins from
             available plugin modules.
     """
+
+    if plugin_dirpath is None:
+        plugin_dirpath = config.plugin_dir
 
     if not plugin_dirpath.is_dir():
         log.warning(f"Skipping plugin discovery since {plugin_dirpath} does not exist")
