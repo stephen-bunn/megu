@@ -7,7 +7,9 @@
 These helper/utility functions should **not** be exposed to plugins.
 """
 
+import functools
 from pathlib import Path
+from typing import Callable, TypeVar
 
 from .config import instance as config
 from .log import instance as log
@@ -18,6 +20,28 @@ REQUIRED_DIRECTORIES = (
     config.plugin_dir,
     config.temp_dir,
 )
+
+
+_T = TypeVar("_T")
+
+
+def compose_functions(*functions: Callable[[_T], _T]) -> Callable[[_T], _T]:
+    """Compose many similar functions together.
+
+    Args:
+        functions (List[Callable[[_T], _T]]):
+            Many functions to compose together.
+
+    Returns:
+        Callable[[_T], _T]:
+            A new function that applies all provided functions in order.
+    """
+
+    return functools.reduce(
+        lambda func_1, func_2: lambda x: func_2(func_1(x)),
+        functions,
+        lambda x: x,
+    )
 
 
 def create_required_directories():
