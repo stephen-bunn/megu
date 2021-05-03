@@ -23,7 +23,7 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 from cached_property import cached_property
 from requests import Response, Session
 
-from ..constants import STAGING_DIR
+from ..config import instance as config
 from ..log import instance as log
 from ..models import Content, HttpResource
 from ..models.content import Manifest, Resource
@@ -451,7 +451,7 @@ class HttpDownloader(BaseDownloader):
         request_futures: Dict[Future, Resource] = {}
         with ThreadPoolExecutor(max_workers=max_connections) as executor:
             for resource_index, resource in enumerate(content.resources):
-                to_path = STAGING_DIR.joinpath(
+                to_path = config.staging_dir.joinpath(
                     f"{content.id!s}.{resource.fingerprint!s}"
                 )
                 request_futures[

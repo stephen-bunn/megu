@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Optional
 
 from ..config import instance as config
-from ..constants import PLUGIN_DIR
 from ..helpers import temporary_directory
 from ..log import instance as log
 from .discover import discover_plugins
