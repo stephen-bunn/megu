@@ -153,6 +153,8 @@ class Content(BaseModel):
     Parameters:
         id (str):
             The plugin-defined content-unique identifier for the content.
+        name (str):
+            The human-readable name to describe the content.
         url (str):
             The absolute URL from where the plugin extracted the content.
             This URL string gets translated into a :class:`~megu.models.types.Url`
@@ -185,6 +187,11 @@ class Content(BaseModel):
     id: str = Field(
         title="ID",
         descripion="The unique identifier of the content.",
+        min_length=1,
+    )
+    name: str = Field(
+        title="Name",
+        description="A human-readable name to describe the content.",
         min_length=1,
     )
     url: Url = Field(
@@ -225,11 +232,6 @@ class Content(BaseModel):
         default_factory=list,
         title="Checksums",
         description="Checksum list if the fetched content can be validated.",
-    )
-    quality_name: Optional[str] = Field(
-        title="Quality Name",
-        description="A human readable name to describe the quality.",
-        default=None,
     )
     extra: Dict[str, Any] = Field(
         default_factory=dict,

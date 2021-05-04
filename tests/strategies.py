@@ -309,6 +309,7 @@ def megu_http_resource(
 def megu_content(
     draw,
     id_strategy: Optional[SearchStrategy[str]] = None,
+    name_strategy: Optional[SearchStrategy[str]] = None,
     url_strategy: Optional[SearchStrategy[str]] = None,
     quality_strategy: Optional[SearchStrategy[float]] = None,
     size_strategy: Optional[SearchStrategy[int]] = None,
@@ -317,13 +318,15 @@ def megu_content(
     resources_strategy: Optional[SearchStrategy[List[Resource]]] = None,
     meta_strategy: Optional[SearchStrategy[Meta]] = None,
     checksum_strategy: Optional[SearchStrategy[List[Checksum]]] = None,
-    quality_name_strategy: Optional[SearchStrategy[str]] = None,
     extra_strategy: Optional[SearchStrategy[dict]] = None,
 ) -> Content:
     """Composite strategy for building a megu Content model."""
 
     return Content(
         id=str(draw(id_strategy if id_strategy else uuids(version=4))),
+        name=draw(
+            name_strategy if name_strategy else text(string.printable, min_size=1)
+        ),
         url=draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY),
         quality=draw(
             quality_strategy
@@ -349,11 +352,6 @@ def megu_content(
             checksum_strategy
             if checksum_strategy
             else lists(megu_checksum(), max_size=2)
-        ),
-        quality_name=draw(
-            quality_name_strategy
-            if quality_name_strategy
-            else one_of(none(), text(string.printable))
         ),
         extra=draw(extra_strategy if extra_strategy else builds(dict)),
     )
