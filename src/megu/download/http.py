@@ -337,6 +337,15 @@ class HttpDownloader(BaseDownloader):
                     response.status_code,
                     self._download_normal,
                 )
+
+                if to_path.is_file():
+                    log.warning(
+                        f"Removing pre-existing resource path {to_path}, "
+                        "this typically happens when downloads are ungracefully "
+                        "cancelled by the user"
+                    )
+                    to_path.unlink()
+
                 downloaded_path = download_handler(
                     resource,
                     response,
