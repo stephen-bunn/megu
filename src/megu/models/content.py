@@ -226,6 +226,11 @@ class Content(BaseModel):
         title="Checksums",
         description="Checksum list if the fetched content can be validated.",
     )
+    quality_name: Optional[str] = Field(
+        title="Quality Name",
+        description="A human readable name to describe the quality.",
+        default=None,
+    )
     extra: Dict[str, Any] = Field(
         default_factory=dict,
         title="Extra",
