@@ -5,11 +5,13 @@
 """Contains generic helpers that the CLI needs to isolate."""
 
 from functools import partial
-from typing import Any, Callable
+from typing import Any, Callable, Iterable
 
 import typer
 
+from ..filters import best_content, specific_content
 from ..helpers import noop
+from ..models.content import Content
 from ..utils import create_required_directories
 
 
@@ -92,3 +94,32 @@ def get_echo(ctx: typer.Context, nl: bool = False) -> Callable[[str], Any]:
         return noop
 
     return partial(typer.echo, nl=nl)
+
+
+def get_content_filter(
+    ctx: typer.Context, **conditions
+) -> Callable[[Iterable[Content]], Iterable[Content]]:
+    """Get the appropriate content filter for some given conditions.
+
+    Args:
+        ctx (typer.Context):
+            The current typer context instance.
+        conditions (Dict[str, Any]):
+            A set of conditions to match.
+
+    Returns:
+        Callable[[Iterable[Content]], Iterable[Content]]:
+            A filter callable that yields the content that should be handled.
+    """
+
+    if len(conditions) <= 0:
+        return best_content
+
+    filter_conditions = {
+        key: value for key, value in conditions.items() if value is not None
+    }
+
+    if len(filter_conditions) <= 0:
+        return best_content
+
+    return partial(specific_content, **filter_conditions)

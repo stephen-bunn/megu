@@ -4,7 +4,6 @@
 
 """The main module for the CLI app."""
 
-from functools import partial
 from itertools import groupby
 from pathlib import Path
 from typing import Optional
@@ -28,7 +27,7 @@ from ..services import (
 from .plugin import plugin_app
 from .style import Colors, Symbols
 from .ui import build_progress, format_content
-from .utils import get_echo, setup_app
+from .utils import get_content_filter, get_echo, setup_app
 
 LOG_VERBOSITY_LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
 DEFAULT_DOWNLOAD_DIR = Path.home().joinpath("Downloads")
@@ -113,12 +112,8 @@ def get(
         f"{Colors.debug | plugin.domains}\n\n"
     )
 
-    content_filter = best_content
-    content_filter_conditions = {"quality": quality, "type": type}
-    if any([value is not None for value in content_filter_conditions.values()]):
-        content_filter = partial(specific_content, **content_filter_conditions)
-
     # discover the appropriate content to download
+    content_filter = get_content_filter(ctx, quality=quality, type=type)
     try:
         for content in content_filter(iter_content(url, plugin)):
             with build_progress(
