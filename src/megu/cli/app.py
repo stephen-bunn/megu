@@ -4,14 +4,16 @@
 
 """The main module for the CLI app."""
 
+from functools import partial
 from itertools import groupby
 from pathlib import Path
+from typing import Optional
 
 import typer
 from chalky import configure as configure_chalky
 from chalky.shortcuts import sty
 
-from ..filters import best_content
+from ..filters import best_content, specific_content
 from ..hasher import HashType, hash_file
 from ..log import configure_logger, get_logger
 from ..log import instance as log
@@ -78,7 +80,20 @@ def get(
         DEFAULT_DOWNLOAD_DIR.as_posix(),
         "--dir",
         "-d",
-        help="The directory to save to.",
+        help="The directory to save content to.",
+        show_default=False,
+    ),
+    quality: Optional[float] = typer.Option(
+        None,
+        "--quality",
+        "-q",
+        help="The exact quality of content to get.",
+    ),
+    type: Optional[str] = typer.Option(
+        None,
+        "--type",
+        "-t",
+        help="The exact type of content to get.",
     ),
 ):
     """Download content from a given url."""
@@ -98,9 +113,14 @@ def get(
         f"{Colors.debug | plugin.domains}\n\n"
     )
 
+    content_filter = best_content
+    content_filter_conditions = {"quality": quality, "type": type}
+    if any([value is not None for value in content_filter_conditions.values()]):
+        content_filter = partial(specific_content, **content_filter_conditions)
+
     # discover the appropriate content to download
     try:
-        for content in best_content(iter_content(url, plugin)):
+        for content in content_filter(iter_content(url, plugin)):
             with build_progress(
                 ctx,
                 report=False,

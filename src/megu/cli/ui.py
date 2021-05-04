@@ -200,6 +200,8 @@ def format_content(content: Content) -> str:
     """
 
     formatted_size = humanfriendly.format_size(content.size)
-    return (Colors.info | content.id) + (
-        Colors.debug | f" {content.quality} {formatted_size} ({content.type})"
+    return (
+        (Colors.info | content.id)
+        + (Colors.success | f" {content.quality}")
+        + (Colors.debug | f" {content.name} [{content.type}] {formatted_size}")
     )

@@ -33,7 +33,7 @@ def normalize_url(url: Union[str, Url]) -> Url:
     if isinstance(url, Url):
         return url
 
-    log.debug(f"Normalizing url {url!r} by casting to {Url!r}")
+    log.debug(f"Normalizing url {url!r}")
     return Url(url)
 
 
