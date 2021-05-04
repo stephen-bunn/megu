@@ -100,6 +100,8 @@ def specific_content(content: Iterable[Content], **conditions) -> Iterable[Conte
     Args:
         content (Iterable[Content]):
             An iterable of content to apply many filters to.
+        conditions (Dict[str, Any]):
+            A dictionary of filters to apply to the given content iterable.
 
     Returns:
         Iterable[Content]:
