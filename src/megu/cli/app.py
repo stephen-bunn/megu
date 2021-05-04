@@ -12,7 +12,6 @@ import typer
 from chalky import configure as configure_chalky
 from chalky.shortcuts import sty
 
-from ..filters import best_content, specific_content
 from ..hasher import HashType, hash_file
 from ..log import configure_logger, get_logger
 from ..log import instance as log
