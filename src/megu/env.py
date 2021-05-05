@@ -9,7 +9,7 @@ from pathlib import Path
 
 import environ
 
-from .constants import CACHE_DIR, LOG_DIR, PLUGIN_DIR
+from .constants import CACHE_DIR, DOWNLOAD_DIR, LOG_DIR, PLUGIN_DIR
 
 
 @environ.config(prefix="MEGU")
@@ -26,11 +26,15 @@ class MeguEnv:
         plugin_dir (~pathlib.Path):
             The directory where plugins will be read from.
             Read from ``MEGU_PLUGIN_DIR``.
+        download_dir (~pathlib.Path):
+            The directory where downloads are stored to by default.
+            Read from ``MEGU_DOWNLOAD_DIR``.
     """
 
     cache_dir: Path = environ.var(default=CACHE_DIR, converter=Path)
     log_dir: Path = environ.var(default=LOG_DIR, converter=Path)
     plugin_dir: Path = environ.var(default=PLUGIN_DIR, converter=Path)
+    download_dir: Path = environ.var(default=DOWNLOAD_DIR, converter=Path)
 
 
 instance: MeguEnv = environ.to_config(MeguEnv, environ=os.environ)

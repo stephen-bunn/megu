@@ -39,6 +39,8 @@ class MeguConfig:
             The directory where logs should be stored.
         plugin_dir (~pathlib.Path):
             The directory where plugins should be read from.
+        download_dir (~pathlib.Path):
+            The directory where downloads are stored to by default.
     """
 
     app_name = APP_NAME
@@ -49,6 +51,7 @@ class MeguConfig:
     cache_dir: Path = attr.ib(default=env.cache_dir)
     log_dir: Path = attr.ib(default=env.log_dir)
     plugin_dir: Path = attr.ib(default=env.plugin_dir)
+    download_dir: Path = attr.ib(default=env.download_dir)
 
 
 instance = MeguConfig()

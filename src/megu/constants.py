@@ -22,6 +22,8 @@ Attributes:
         The directory path where the application temporary files live.
     STAGING_DIR (~pathlib.Path):
         The directory path where the application downloads content fragments to.
+    DOWNLOAD_DIR (~pathlib.Path):
+        The directory path where downloads are stored to by default.
 """
 
 import tempfile
@@ -40,3 +42,4 @@ LOG_DIR = Path(app_dirs.user_log_dir).absolute()
 PLUGIN_DIR = CONFIG_DIR.joinpath("plugins")
 TEMP_DIR = Path(tempfile.gettempdir()).joinpath(APP_NAME)
 STAGING_DIR = TEMP_DIR.joinpath(".staging")
+DOWNLOAD_DIR = Path.home().joinpath("Downloads").absolute()

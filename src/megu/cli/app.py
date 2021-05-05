@@ -12,6 +12,7 @@ import typer
 from chalky import configure as configure_chalky
 from chalky.shortcuts import sty
 
+from ..config import instance as config
 from ..hasher import HashType, hash_file
 from ..log import configure_logger, get_logger
 from ..log import instance as log
@@ -28,7 +29,6 @@ from .ui import build_progress, format_content, format_plugin
 from .utils import get_content_filter, get_echo, setup_app
 
 LOG_VERBOSITY_LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
-DEFAULT_DOWNLOAD_DIR = Path.home().joinpath("Downloads")
 
 app = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
 app.add_typer(plugin_app, name="plugin")
@@ -73,12 +73,11 @@ def main(
 def get(
     ctx: typer.Context,
     from_url: str = typer.Argument(..., metavar="URL"),
-    to_dir: str = typer.Option(
-        DEFAULT_DOWNLOAD_DIR.as_posix(),
+    to_dir: Optional[str] = typer.Option(
+        None,
         "--dir",
         "-d",
         help="The directory to save content to.",
-        show_default=False,
     ),
     quality: Optional[float] = typer.Option(
         None,
@@ -107,6 +106,11 @@ def get(
     # discover the appropriate content to download
     content_filter = get_content_filter(ctx, quality=quality, type=type)
     try:
+        download_dir = (
+            config.download_dir
+            if to_dir is None
+            else Path(to_dir).expanduser().absolute()
+        )
         for content in content_filter(iter_content(url, plugin)):
             with build_progress(
                 ctx,
@@ -116,7 +120,7 @@ def get(
                 bar_format="{desc} {percentage:0.1f}%",
             ) as progress:
                 # verify content file doesn't already exist
-                to_path = Path(to_dir, content.filename).expanduser().absolute()
+                to_path = download_dir.joinpath(content.filename)
                 if to_path.exists():
                     # if no checksums are defined, let's assume the file is valid
                     if len(content.checksums) <= 0:
