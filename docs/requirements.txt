@@ -9,7 +9,6 @@ requests
 furl
 orderedmultidict
 chalky
-xxhash
 cached-property
 beautifulsoup4
 lxml

@@ -113,8 +113,8 @@ class HttpResource(Resource):
 
         fingerprint = hash_io(
             BytesIO(self._get_signature()),
-            {HashType.XXHASH},
-        )[HashType.XXHASH]
+            {HashType.MD5},
+        )[HashType.MD5]
         log.debug(f"Computed fingerprint {fingerprint!r} for resource {self!r}")
 
         return fingerprint

@@ -41,8 +41,8 @@ class GenericPlugin(BasePlugin):
 
         url_hash = hash_io(
             BytesIO(bytes(url.url, "utf-8")),
-            {HashType.XXHASH},
-        )[HashType.XXHASH]
+            {HashType.MD5},
+        )[HashType.MD5]
 
         return f"generic-{url_hash!s}"
 
