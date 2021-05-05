@@ -17,6 +17,7 @@ from yaspin.core import Yaspin
 from ..helpers import noop_class
 from ..models import Content
 from ..plugin import BasePlugin
+from ..plugin.generic import GenericPlugin
 from .style import Colors, Symbols
 from .utils import get_echo, is_debug_context, is_progress_context
 
@@ -163,7 +164,8 @@ def format_plugin(plugin: BasePlugin) -> str:
             The properly formatted string.
     """
 
-    return (Colors.info | plugin.name) + " " + (Colors.debug | plugin.domains)
+    plugin_color = Colors.warning if isinstance(plugin, GenericPlugin) else Colors.info
+    return f"{plugin_color | plugin.name} {Colors.debug | plugin.domains}"
 
 
 def display_plugin(ctx: typer.Context, package_name: str, plugins: List[BasePlugin]):

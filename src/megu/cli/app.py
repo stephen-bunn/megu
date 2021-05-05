@@ -15,7 +15,6 @@ from chalky.shortcuts import sty
 from ..hasher import HashType, hash_file
 from ..log import configure_logger, get_logger
 from ..log import instance as log
-from ..plugin.generic import GenericPlugin
 from ..services import (
     get_downloader,
     get_plugin,
@@ -25,7 +24,7 @@ from ..services import (
 )
 from .plugin import plugin_app
 from .style import Colors, Symbols
-from .ui import build_progress, format_content
+from .ui import build_progress, format_content, format_plugin
 from .utils import get_content_filter, get_echo, setup_app
 
 LOG_VERBOSITY_LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
@@ -103,13 +102,7 @@ def get(
 
     # discover the appropriate plugin for the URL
     plugin = get_plugin(url)
-    plugin_color = (
-        Colors.warning if isinstance(plugin, GenericPlugin) else Colors.success
-    )
-    echo(
-        f"Using plugin {plugin_color | plugin.name} "
-        f"{Colors.debug | plugin.domains}\n\n"
-    )
+    echo(f"Using plugin {format_plugin(plugin)}\n\n")
 
     # discover the appropriate content to download
     content_filter = get_content_filter(ctx, quality=quality, type=type)
@@ -173,13 +166,7 @@ def show(
 
     # discover the appropriate plugin for the URL
     plugin = get_plugin(url)
-    plugin_color = (
-        Colors.warning if isinstance(plugin, GenericPlugin) else Colors.success
-    )
-    echo(
-        f"Using plugin {plugin_color | plugin.name} "
-        f"{Colors.debug | plugin.domains}\n\n"
-    )
+    echo(f"Using plugin {format_plugin(plugin)}\n\n")
 
     try:
         for content_id, content in groupby(iter_content(url, plugin), lambda c: c.id):
