@@ -201,9 +201,9 @@ def format_content(content: Content) -> str:
             The user-friendly display string for the given content.
     """
 
-    formatted_size = humanfriendly.format_size(content.size)
+    formatted_size = humanfriendly.format_size(content.size, keep_width=True)
     return (
         (Colors.info | content.id)
         + (Colors.success | f" {content.quality}")
-        + (Colors.debug | f" {content.name} [{content.type}] {formatted_size}")
+        + (Colors.debug | f" [{formatted_size}] - {content.name} ({content.type})")
     )

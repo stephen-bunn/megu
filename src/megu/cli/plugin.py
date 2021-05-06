@@ -25,7 +25,10 @@ def plugin_add(ctx: typer.Context, plugin: str):
     echo = get_echo(ctx)
     with build_spinner(
         ctx,
-        text=f"Add Plugin {Colors.success | plugin} {Symbols.right_arrow} ",
+        text=(
+            f"Installing plugin {Colors.success | plugin} via pip "
+            f"{Symbols.right_arrow} "
+        ),
         side="right",
         reraise=False,
         report=False,
@@ -33,7 +36,7 @@ def plugin_add(ctx: typer.Context, plugin: str):
         package_dirpath = add_plugin(
             plugin, silence_subprocess=(not is_debug_context(ctx))
         )
-        spinner.ok(Colors.success | Symbols.success)
+        spinner.ok(Colors.success | package_dirpath)
         echo("\n")
         for package_name, plugins in discover_plugins(package_dirpath):
             display_plugin(ctx, package_name, plugins)
