@@ -26,7 +26,7 @@ from ..services import (
 from .plugin import plugin_app
 from .style import Colors, Symbols
 from .ui import build_progress, format_content, format_plugin
-from .utils import get_content_filter, get_echo, setup_app
+from .utils import build_content_filter, build_content_name, get_echo, setup_app
 
 LOG_VERBOSITY_LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
 
@@ -79,6 +79,12 @@ def get(
         "-d",
         help="The directory to save content to.",
     ),
+    to_name: Optional[str] = typer.Option(
+        None,
+        "--name",
+        "-n",
+        help="The name format to save content with.",
+    ),
     quality: Optional[float] = typer.Option(
         None,
         "--quality",
@@ -104,7 +110,7 @@ def get(
     echo(f"Using plugin {format_plugin(plugin)}\n\n")
 
     # discover the appropriate content to download
-    content_filter = get_content_filter(ctx, quality=quality, type=type)
+    content_filter = build_content_filter(quality=quality, type=type)
     try:
         download_dir = (
             config.download_dir
@@ -116,11 +122,16 @@ def get(
                 ctx,
                 report=False,
                 total=content.size,
-                desc=f"  {Colors.info | content.filename} {Symbols.right_arrow}",
+                desc=f"  {Colors.info | content.id} {Symbols.right_arrow}",
                 bar_format="{desc} {percentage:0.1f}%",
             ) as progress:
                 # verify content file doesn't already exist
-                to_path = download_dir.joinpath(content.filename)
+                to_path = download_dir.joinpath(
+                    build_content_name(content, to_name)
+                    if to_name
+                    else content.filename
+                )
+
                 if to_path.exists():
                     # if no checksums are defined, let's assume the file is valid
                     if len(content.checksums) <= 0:

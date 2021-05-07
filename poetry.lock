@@ -106,6 +106,14 @@ six = ">=1.9.0"
 webencodings = "*"
 
 [[package]]
+name = "boltons"
+version = "20.2.1"
+description = "When they're not builtins, they're boltons."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "cached-property"
 version = "1.5.2"
 description = "A decorator for caching properties in classes."
@@ -286,6 +294,17 @@ apipkg = ">=1.4"
 testing = ["pre-commit"]
 
 [[package]]
+name = "face"
+version = "20.1.1"
+description = "A command-line application framework (and CLI parser). Friendly for users, full-featured for developers."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+boltons = ">=20.0.0"
+
+[[package]]
 name = "filelock"
 version = "3.0.12"
 description = "A platform independent file lock."
@@ -329,6 +348,22 @@ python-versions = "*"
 [package.dependencies]
 orderedmultidict = ">=1.0.1"
 six = ">=1.8.0"
+
+[[package]]
+name = "glom"
+version = "20.11.0"
+description = "A declarative object transformer and formatter, for conglomerating nested data."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+attrs = "*"
+boltons = ">=19.3.0"
+face = ">=20.1.0"
+
+[package.extras]
+yaml = ["pyyaml"]
 
 [[package]]
 name = "humanfriendly"
@@ -1323,7 +1358,7 @@ profile = []
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "99ad739df6ca54b6ad4783e8548f087ba1c1947e12c856dd4d1b24dcdda0f93c"
+content-hash = "3012f38dbc5c1731582884ef7b96e06fe9446cf00f170c031d332a61c89b728b"
 
 [metadata.files]
 alabaster = [
@@ -1362,6 +1397,10 @@ black = [
 bleach = [
     {file = "bleach-3.3.0-py2.py3-none-any.whl", hash = "sha256:6123ddc1052673e52bab52cdc955bcb57a015264a1c57d37bea2f6b817af0125"},
     {file = "bleach-3.3.0.tar.gz", hash = "sha256:98b3170739e5e83dd9dc19633f074727ad848cbedb6026708c8ac2d3b697a433"},
+]
+boltons = [
+    {file = "boltons-20.2.1-py2.py3-none-any.whl", hash = "sha256:3dd8a8e3c1886e7f7ba3422b50f55a66e1700161bf01b919d098e7d96dd2d9b6"},
+    {file = "boltons-20.2.1.tar.gz", hash = "sha256:dd362291a460cc1e0c2e91cc6a60da3036ced77099b623112e8f833e6734bdc5"},
 ]
 cached-property = [
     {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
@@ -1564,6 +1603,10 @@ execnet = [
     {file = "execnet-1.8.0-py2.py3-none-any.whl", hash = "sha256:7a13113028b1e1cc4c6492b28098b3c6576c9dccc7973bfe47b342afadafb2ac"},
     {file = "execnet-1.8.0.tar.gz", hash = "sha256:b73c5565e517f24b62dea8a5ceac178c661c4309d3aa0c3e420856c072c411b4"},
 ]
+face = [
+    {file = "face-20.1.1-py2-none-any.whl", hash = "sha256:3790311a7329e4b0d90baee346eecad54b337629576edf3a246683a5f0d24446"},
+    {file = "face-20.1.1.tar.gz", hash = "sha256:7d59ca5ba341316e58cf72c6aff85cca2541cf5056c4af45cb63af9a814bed3e"},
+]
 filelock = [
     {file = "filelock-3.0.12-py3-none-any.whl", hash = "sha256:929b7d63ec5b7d6b71b0fa5ac14e030b3f70b75747cef1b10da9b879fef15836"},
     {file = "filelock-3.0.12.tar.gz", hash = "sha256:18d82244ee114f543149c66a6e0c14e9c4f8a1044b5cdaadd0f82159d6a6ff59"},
@@ -1579,6 +1622,10 @@ flake8-docstrings = [
 furl = [
     {file = "furl-2.1.0-py2.py3-none-any.whl", hash = "sha256:f4d6f1e5479c376a5b7bdc62795d736d8c1b2a754f366a2ad2816e46e946e22e"},
     {file = "furl-2.1.0.tar.gz", hash = "sha256:c0e0231a1feee2acd256574b7033df3144775451c610cb587060d6a0d7e0b621"},
+]
+glom = [
+    {file = "glom-20.11.0-py2.py3-none-any.whl", hash = "sha256:566f723ecac64d8bd93b3c33fbfd4d5ea7cb2842b5286a19f48c66240408b55f"},
+    {file = "glom-20.11.0.tar.gz", hash = "sha256:54051072bccc9cdb3ebbd8af0559195137a61d308f04bff19678e4b61350eb12"},
 ]
 humanfriendly = [
     {file = "humanfriendly-9.1-py2.py3-none-any.whl", hash = "sha256:d5c731705114b9ad673754f3317d9fa4c23212f36b29bdc4272a892eafc9bc72"},

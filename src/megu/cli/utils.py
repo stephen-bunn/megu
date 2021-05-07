@@ -4,10 +4,13 @@
 
 """Contains generic helpers that the CLI needs to isolate."""
 
+import re
 from functools import partial
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Optional
 
 import typer
+from glom import PathAccessError, glom
+from glom.core import _MISSING as glom_MISSING
 
 from ..filters import best_content, specific_content
 from ..helpers import noop
@@ -96,14 +99,12 @@ def get_echo(ctx: typer.Context, nl: bool = False) -> Callable[[str], Any]:
     return partial(typer.echo, nl=nl)
 
 
-def get_content_filter(
-    ctx: typer.Context, **conditions
+def build_content_filter(
+    **conditions,
 ) -> Callable[[Iterable[Content]], Iterable[Content]]:
     """Get the appropriate content filter for some given conditions.
 
     Args:
-        ctx (typer.Context):
-            The current typer context instance.
         conditions (Dict[str, Any]):
             A set of conditions to match.
 
@@ -123,3 +124,68 @@ def get_content_filter(
         return best_content
 
     return partial(specific_content, **filter_conditions)
+
+
+def build_content_name(
+    content: Content,
+    to_name: str,
+    default: Optional[str] = None,
+) -> str:
+    """Build the appropriate content name given a name format string.
+
+    This helper utilizes `glom <https://glom.readthedocs.io/en/latest/index.html>`_
+    to access features nested within the content instance to help build a name for the
+    content as defined by a given format string.
+
+    This format string should use the traditional string formatting expressions using
+    braces "{}". But within these braces, you should be able to supply glom path
+    notation syntax using dots to access nested properties.
+
+    Examples:
+        >>> build_content_name(content, "{url.domain} - {id}{ext}")
+        gfycat.com - gfycat-PepperyVictoriousGalah.mp4
+
+        >>> build_content_name(content, "{meta.title}{ext}")
+        Wonder Woman 1984 - I like to party (steps) GIF.mp4
+
+    Args:
+        content (~megu.models.Content):
+            The content instance that needs a name.
+        to_name (str):
+            The name format string to use to build a content name.
+        default (Optional[str], optional):
+            The fallback value for missing format string attributes.
+            Defaults to None.
+
+    Raises:
+        ValueError:
+            When the formatting string contains a non-existent attribute and a default
+            fallback value has not been defined.
+
+    Returns:
+        str:
+            A new fully formatted string using the attributes defined from the given
+            formatting string.
+    """
+
+    content_name = to_name
+    for match in re.finditer(r"{(\w+(?:\.\w+)?)}", to_name):
+        try:
+            value = glom(content, match.group(1), default=(default or glom_MISSING))
+            if value is None and default is not None:
+                value = default
+            else:
+                raise ValueError(
+                    f"Building name for content {content.id} failed, "
+                    f"value for {match.group(1)!r} resolved to None"
+                )
+        except PathAccessError as exc:
+            # reraise glom's PathAccessError as a standard ValueError so we don't have
+            # to capture random library exceptions in the top-level of the CLI.
+            raise ValueError(
+                f"Building name for content {content.id} failed, {exc.get_message()}"
+            )
+
+        content_name = re.sub(match.group(0), str(value), content_name)
+
+    return content_name.strip()
