@@ -142,7 +142,7 @@ def build_content_name(
     notation syntax using dots to access nested properties.
 
     Examples:
-        >>> build_content_name(content, "{url.domain} - {id}{ext}")
+        >>> build_content_name(content, "{url.netloc} - {id}{ext}")
         gfycat.com - gfycat-PepperyVictoriousGalah.mp4
 
         >>> build_content_name(content, "{meta.title}{ext}")
@@ -172,13 +172,13 @@ def build_content_name(
     for match in re.finditer(r"{(\w+(?:\.\w+)?)}", to_name):
         try:
             value = glom(content, match.group(1), default=(default or glom_MISSING))
-            if value is None and default is not None:
-                value = default
-            else:
+            if value is None and default is None:
                 raise ValueError(
                     f"Building name for content {content.id} failed, "
                     f"value for {match.group(1)!r} resolved to None"
                 )
+            elif value is None:
+                value = default
         except PathAccessError as exc:
             # reraise glom's PathAccessError as a standard ValueError so we don't have
             # to capture random library exceptions in the top-level of the CLI.

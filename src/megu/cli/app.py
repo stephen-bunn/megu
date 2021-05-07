@@ -98,7 +98,23 @@ def get(
         help="The exact type of content to get.",
     ),
 ):
-    """Download content from a given url."""
+    """
+    Download all highest quality content provided by the URL.
+
+    $ megu get [URL]
+
+    Download all content provided by the URL to a specific directory.
+
+    $ megu get --dir ~/Desktop [URL]
+
+    Name all downloaded content provided by the URL using a format string.
+
+    $ megu get --name "{url.netloc} - {quality}{ext}" [URL]
+
+    Only download PNG images from the content provided by the URL.
+
+    $ megu get --type image/png [URL]
+    """
 
     url = normalize_url(from_url)
 
@@ -131,12 +147,17 @@ def get(
                     if to_name
                     else content.filename
                 )
+                if not to_path.parent.is_dir():
+                    progress.bar_format = "{desc} " + (
+                        Colors.error | f"{to_path.parent} directory does not exist"
+                    )
+                    continue
 
                 if to_path.exists():
                     # if no checksums are defined, let's assume the file is valid
                     if len(content.checksums) <= 0:
                         progress.bar_format = "{desc} " + (
-                            Colors.error | f"{to_path.as_posix()} exists"
+                            Colors.error | f"{to_path} exists"
                         )
                         continue
 
@@ -148,7 +169,7 @@ def get(
                         == first_checksum.hash
                     ):
                         progress.bar_format = "{desc} " + (
-                            Colors.error | f"{to_path.as_posix()} exists"
+                            Colors.error | f"{to_path} exists"
                         )
                         continue
 
@@ -172,7 +193,11 @@ def show(
     ctx: typer.Context,
     from_url: str = typer.Argument(..., metavar="URL"),
 ):
-    """Show what content is extracted from a URL."""
+    """
+    Show all available content from a URL.
+
+    $ megu show [URL]
+    """
 
     url = normalize_url(from_url)
 
