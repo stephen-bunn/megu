@@ -83,9 +83,10 @@ class GenericPlugin(BasePlugin):
 
             yield Content(
                 id=GenericPlugin._build_id(url),
+                name="Generic Content",
                 url=url.url,
                 quality=1.0,
-                size=int(head.headers["Content-Length"]),
+                size=int(head.headers.get("Content-Length", 0)),
                 type=head.headers["Content-Type"],
                 resources=[HttpResource(method=HttpMethod.GET, url=url.url)],
             )
