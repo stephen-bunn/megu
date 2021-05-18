@@ -90,7 +90,7 @@ class HttpDownloader(BaseDownloader):
                 The response for the given resource.
         """
 
-        log.info(f"Sending request for resource {resource}")
+        log.debug(f"Sending request for resource {resource}")
         return self.session.send(resource.to_request(), stream=stream)
 
     def _download_normal(

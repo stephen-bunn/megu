@@ -80,7 +80,7 @@ def allocate_storage(to_path: Path, size: int) -> Path:
         log.debug(f"Creating directory {to_path.parent!s} to allocate {to_path!s}")
         to_path.parent.mkdir(mode=0o777, parents=True)
 
-    log.info(f"Allocating {size!s} bytes at {to_path!s}")
+    log.debug(f"Allocating {size!s} bytes at {to_path!s}")
     with to_path.open("wb") as file_handle:
         file_handle.seek(size - 1)
         file_handle.write(b"\x00")

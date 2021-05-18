@@ -172,5 +172,5 @@ def add_plugin(
         )
         shutil.copytree(temp_dirpath, package_dirpath)
 
-        log.success(f"Installed plugin {package_name} to {package_dirpath}")
+        log.info(f"Installed plugin {package_name} to {package_dirpath}")
         return package_dirpath

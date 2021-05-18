@@ -135,7 +135,7 @@ def get_downloader(content: Content) -> BaseDownloader:
             )
             continue
 
-        log.success(f"Downloader {downloader!r} can handle content {content!r}")
+        log.info(f"Downloader {downloader!r} can handle content {content!r}")
         return downloader()
 
     log.warning(

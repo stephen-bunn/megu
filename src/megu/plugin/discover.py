@@ -38,7 +38,7 @@ def load_plugin(plugin_name: str, plugin_class: Type[BasePlugin]) -> BasePlugin:
 
     try:
         plugin = plugin_class()
-        log.success(f"Loaded plugin {plugin_class!r} from {plugin_name!r}")
+        log.info(f"Loaded plugin {plugin_class!r} from {plugin_name!r}")
         return plugin
     except Exception as exc:
         plugin_exception = PluginFailure(
@@ -109,7 +109,7 @@ def discover_plugins(
     with python_path(package_dirpath):
         plugin_prefix = f"{config.app_name!s}_"
 
-        log.info(f"Discovering plugins in {package_dir!r}")
+        log.debug(f"Discovering plugins in {package_dir!r}")
         for _, plugin_name, _ in pkgutil.iter_modules([package_dir]):
             # filter out modules that are not prefixed with the application name
             if not plugin_name.startswith(plugin_prefix):
