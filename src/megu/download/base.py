@@ -10,10 +10,8 @@ Attributes:
 """
 
 import abc
-from pathlib import Path
 from typing import Any, Callable, Optional
 
-from ..log import instance as log
 from ..models import Content
 from ..models.content import Manifest
 
