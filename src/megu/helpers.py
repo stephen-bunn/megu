@@ -204,11 +204,13 @@ def python_path(*paths: PathLike) -> Generator[List[str], None, None]:
         else:
             for directory_name in paths:
                 directory_path = Path(directory_name).expanduser().resolve()
-                if not directory_path.is_dir() or directory_path.as_posix() in sys.path:
+                if not directory_path.is_dir():
                     log.warning(
                         f"Skipping inserting the directory {directory_path!s} into the "
-                        "Python path, is not a directory or already present"
+                        "Python path, is not a directory"
                     )
+                    continue
+                if directory_path.as_posix() in sys.path:
                     continue
 
                 log.debug(
