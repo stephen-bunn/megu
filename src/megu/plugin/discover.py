@@ -38,7 +38,7 @@ def load_plugin(plugin_name: str, plugin_class: Type[BasePlugin]) -> BasePlugin:
 
     try:
         plugin = plugin_class()
-        log.info(f"Loaded plugin {plugin_class!r} from {plugin_name!r}")
+        log.debug(f"Loaded plugin {plugin_class!r} from {plugin_name!r}")
         return plugin
     except Exception as exc:
         plugin_exception = PluginFailure(

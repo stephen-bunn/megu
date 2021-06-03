@@ -49,7 +49,7 @@ def create_required_directories():
 
     for required_dirpath in REQUIRED_DIRECTORIES:
         if not required_dirpath.is_dir():
-            log.info(f"Creating required directory at {required_dirpath}")
+            log.debug(f"Creating required directory at {required_dirpath}")
             required_dirpath.mkdir(mode=0o777, parents=True)
 
 

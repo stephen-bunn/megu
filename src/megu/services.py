@@ -60,7 +60,7 @@ def get_plugin(
     if plugin_dirpath is not None and plugin_dirpath.is_dir():
         dirpath = plugin_dirpath.absolute()
 
-    log.info(
+    log.debug(
         f"Determining which plugin from {dirpath.as_posix()!r} can handle "
         f"URL {url.url!r}"
     )
@@ -109,7 +109,7 @@ def iter_content(
     """
 
     url = normalize_url(url)
-    log.info(f"Extracting content from {url} using {plugin}")
+    log.debug(f"Extracting content from {url} using {plugin}")
     for content in plugin.extract_content(url):
         log.info(f"Extracted content {content} from {url} using {plugin}")
         yield content
