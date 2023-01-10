@@ -101,7 +101,6 @@ twine = "^3.2.0"
 vprof = { version = "^0.38", optional = true }
 sphinx-autodoc-typehints = "^1.11.1"
 sphinx-hoverxref = "^0.5b1"
-sphinx-rtd-theme = {git = "https://github.com/stephen-bunn/sphinx_rtd_theme", rev = "megu"}
 
 [tool.poetry.extras]
 profile = ["pyprof2calltree", "vprof"]

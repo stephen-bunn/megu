@@ -63,7 +63,6 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx_autodoc_typehints",
     "hoverxref.extension",
-    "sphinx_rtd_theme",
 ]
 
 # Autodoc settings
@@ -144,7 +143,7 @@ with open("./_links.rst", "r") as file_handle:
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+html_theme = "alabaster"
 html_logo = "_static/assets/images/megu-icon.svg"
 html_favicon = "_static/favicon.png"
 
