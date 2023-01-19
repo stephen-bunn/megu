@@ -1,23 +1,22 @@
-# -*- encoding: utf-8 -*-
-# Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
-# GPLv3 License <https://choosealicense.com/licenses/gpl-3.0/>
-
 """This module provides simple safe hashing functions.
 
 We only support several of the available hashing algorithms from :mod:`hashlib` as
 they have several that are never really used (such as ``sha224``).
 
-.. tip:: The provided basic functions allow you to calculate multiple hashes at the same
-    time which means that your bottleneck will be whatever slowest hashing algorithm you
-    request.
+The provided basic functions allow you to calculate multiple hashes at the same
+time which means that your bottleneck will be whatever slowest hashing algorithm you
+request.
 
->>> from megu.hasher import hash_io, HashType
->>> with open("/home/user/A/PATH/TO/A/FILE", "rb") as file_io:
-...     hashes = hash_io(file_io, {HashType.MD5, HashType.SHA256})
-{
-    <HashType.SHA256: 'sha256'>: 'f0e4c2f76c58916ec258f246851bea091d14d4247a2f...',
-    <HashType.MD5: 'md5'>: 'a46062d24103b87560b2dc0887a1d5de'
-}
+```python
+from megu.hasher import hash_io, HashType
+with open("/home/user/A/PATH/TO/A/FILE", "rb") as file_io:
+    hashes = hash_io(file_io, {HashType.MD5, HashType.SHA256})
+
+# {
+#     <HashType.SHA256: 'sha256'>: 'f0e4c2f76c58916ec258f246851bea091d14d4247a2f...',
+#     <HashType.MD5: 'md5'>: 'a46062d24103b87560b2dc0887a1d5de'
+# }
+```
 
 Attributes:
     DEFAULT_CHUNK_SIZE (int):
@@ -27,13 +26,17 @@ Attributes:
 import hashlib
 from enum import Enum
 from pathlib import Path
-from typing import IO, BinaryIO, Callable, Dict, Set, Union
+from typing import IO, BinaryIO, Callable
 
-from .log import instance as log
+Hasher = Callable[[bytes | bytearray | memoryview], "hashlib._Hash"]
 
-Hasher_T = Callable[[Union[bytes, bytearray, memoryview]], "hashlib._Hash"]
-
-DEFAULT_CHUNK_SIZE = 2 ** 16
+DEFAULT_CHUNK_SIZE = 2**16
+AVAILABLE_HASHERS: dict[str, Hasher] = {
+    "md5": hashlib.md5,
+    "sha1": hashlib.sha1,
+    "sha256": hashlib.sha256,
+    "sha512": hashlib.sha512,
+}
 
 
 class HashType(Enum):
@@ -43,36 +46,22 @@ class HashType(Enum):
     SHA1 = "sha1"
     SHA256 = "sha256"
     SHA512 = "sha512"
-    BLAKE2B = "blake2b"
-    BLAKE2S = "blake2s"
-
-    # NOTE: Enums still consider class-mangled class properties as values in the
-    # enumeration. So you can do HashType._HashType__available_hashers or
-    # HashType("__available_hashers") and it's *technically* valid.
-    __available_hashers: Dict[str, Hasher_T] = {
-        MD5: hashlib.md5,
-        SHA1: hashlib.sha1,
-        SHA256: hashlib.sha256,
-        SHA512: hashlib.sha512,
-        BLAKE2B: hashlib.blake2b,
-        BLAKE2S: hashlib.blake2s,
-    }
 
     @property
-    def hasher(self) -> Hasher_T:
+    def hasher(self) -> Hasher:
         """Get the hasher callable for the current hash type."""
 
-        # The type of this __available_hashers is no longer a dict due to it being
-        # coerced into a enumeration property on the instance. That is why we are having
-        # to access it through .value here.
-        return self.__available_hashers.value[self.value]  # type: ignore
+        if self.value not in AVAILABLE_HASHERS:
+            raise ValueError(f"No available hasher {self.value!r}")
+
+        return AVAILABLE_HASHERS[self.value]
 
 
 def hash_io(
-    io: Union[BinaryIO, IO[bytes]],
-    types: Set[HashType],
+    io: BinaryIO | IO[bytes],
+    types: set[HashType],
     chunk_size: int = DEFAULT_CHUNK_SIZE,
-) -> Dict[HashType, str]:
+) -> dict[HashType, str]:
     """Calculate the requested hash types for some given binary IO instance.
 
     >>> from io import BytesIO
@@ -115,8 +104,7 @@ def hash_io(
             A dictionary of hash type strings and the calculated hexdigest of the hash.
     """
 
-    log.debug(f"Hashing {io!r} with types {types!r} at chunks of {chunk_size!r} bytes")
-    hashers: Dict[HashType, "hashlib._Hash"] = {
+    hashers: dict[HashType, "hashlib._Hash"] = {
         hash_type: hash_type.hasher() for hash_type in types  # type: ignore
     }
 
@@ -131,9 +119,9 @@ def hash_io(
 
 def hash_file(
     filepath: Path,
-    types: Set[HashType],
+    types: set[HashType],
     chunk_size: int = DEFAULT_CHUNK_SIZE,
-) -> Dict[HashType, str]:
+) -> dict[HashType, str]:
     """Calculate the requested hash types for some given file path instance.
 
     Basic usage of this function typically looks like the following:

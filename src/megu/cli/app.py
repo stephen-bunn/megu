@@ -1,220 +1,139 @@
-# -*- encoding: utf-8 -*-
-# Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
-# GPLv3 License <https://choosealicense.com/licenses/gpl-3.0/>
-
-"""The main module for the CLI app."""
-
 from itertools import groupby
 from pathlib import Path
 from typing import Optional
 
-import typer
-from chalky import configure as configure_chalky
-from chalky.shortcuts import sty
-
-from ..config import instance as config
-from ..hasher import HashType, hash_file
-from ..log import configure_logger, get_logger
-from ..log import instance as log
-from ..services import (
-    get_downloader,
-    get_plugin,
-    iter_content,
-    merge_manifest,
-    normalize_url,
+from rich.tree import Tree
+from rich.columns import Columns
+from rich.progress import (
+    Progress,
+    TextColumn,
+    BarColumn,
+    DownloadColumn,
+    TaskProgressColumn,
+    TimeRemainingColumn,
 )
-from .plugin import plugin_app
-from .style import Colors, Symbols
-from .ui import build_progress, format_content, format_plugin
-from .utils import build_content_filter, build_content_name, get_echo, setup_app
+from rich.filesize import decimal as format_filesize
+from typer import Typer, Context, Option, Argument
 
-LOG_VERBOSITY_LEVELS = ["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]
+from megu import normalize_url, get_plugin, get_downloader, iter_content, write_content
+from megu.hash import hash_file, HashType
+from megu.config import DOWNLOAD_DIRPATH
+from megu.cli.utils import get_console, build_content_filter, build_content_name
+from megu.cli.plugin import plugin_app
 
-app = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
+app = Typer(context_settings={"help_option_names": ["-h", "--help"]})
 app.add_typer(plugin_app, name="plugin")
 
 
 @app.callback()
-@log.catch()
-def main(
-    ctx: typer.Context,
-    color: bool = typer.Option(default=True, help="Enable color output."),
-    debug: bool = typer.Option(default=False, help="Enable debug logging."),
-    verbosity: int = typer.Option(
-        0,
-        "--verbose",
-        "-v",
-        help="Log verbosity level.",
-        min=0,
-        max=len(LOG_VERBOSITY_LEVELS) - 1,
-        count=True,
-        clamp=True,
-    ),
-):
-    """Megu."""
-
-    logger = get_logger()
-    configure_logger(logger, level=LOG_VERBOSITY_LEVELS[verbosity])
-
-    if debug:
-        configure_logger(
-            logger,
-            level=LOG_VERBOSITY_LEVELS[-1],
-            debug=True,
-            record=True,
-        )
-
-    configure_chalky(disable=(not color))
-    setup_app()
+def main(ctx: Context, color: bool = Option(default=True, help="Enable color output.")):
+    ...
 
 
 @app.command("get")
-@log.catch()
 def get(
-    ctx: typer.Context,
-    from_url: str = typer.Argument(..., metavar="URL"),
-    to_dir: Optional[str] = typer.Option(
+    ctx: Context,
+    from_url: str = Argument(..., metavar="URL"),
+    to_dir: Optional[str] = Option(
         None,
         "--dir",
         "-d",
-        help="The directory to save content to.",
+        help="The directory to save the content to.",
     ),
-    to_name: Optional[str] = typer.Option(
+    to_name: Optional[str] = Option(
         None,
         "--name",
         "-n",
         help="The name format to save content with.",
     ),
-    quality: Optional[float] = typer.Option(
+    quality: Optional[float] = Option(
         None,
         "--quality",
         "-q",
-        help="The exact quality of content to get.",
+        help="The quality of content to get.",
     ),
-    type: Optional[str] = typer.Option(
+    type: Optional[str] = Option(
         None,
         "--type",
         "-t",
-        help="The exact type of content to get.",
+        help="The type of content to get.",
     ),
 ):
-    """
-    Download all highest quality content provided by the URL.
+    """Download content from a URL."""
 
-    $ megu get [URL]
-
-    Download all content provided by the URL to a specific directory.
-
-    $ megu get --dir ~/Desktop [URL]
-
-    Name all downloaded content provided by the URL using a format string.
-
-    $ megu get --name "{url.netloc} - {quality}{ext}" [URL]
-
-    Only download PNG images from the content provided by the URL.
-
-    $ megu get --type image/png [URL]
-    """
-
+    console = get_console(ctx.color)
     url = normalize_url(from_url)
-
-    echo = get_echo(ctx)
-    echo(f"{sty.bold | 'Get'} {Colors.info | url.url}\n")
-
-    # discover the appropriate plugin for the URL
     plugin = get_plugin(url)
-    echo(f"Using plugin {format_plugin(plugin)}\n\n")
 
-    # discover the appropriate content to download
     content_filter = build_content_filter(quality=quality, type=type)
     try:
-        download_dir = (
-            config.download_dir
-            if to_dir is None
-            else Path(to_dir).expanduser().absolute()
+        download_dirpath = (
+            DOWNLOAD_DIRPATH if to_dir is None else Path(to_dir).expanduser().absolute()
         )
-        for content in content_filter(iter_content(url, plugin)):
-            with build_progress(
-                ctx,
-                report=False,
-                total=content.size,
-                desc=f"  {Colors.info | content.id} {Symbols.right_arrow}",
-                bar_format="{desc} {percentage:0.1f}%",
+        for content in content_filter(iter_content(plugin, url)):
+            to_path = download_dirpath.joinpath(
+                build_content_name(content, to_name) if to_name is not None else content.filename
+            )
+            with Progress(
+                TextColumn(f"[info]{content.id}[/] [success]{content.name}[/]"),
+                BarColumn(),
+                TaskProgressColumn(),
+                DownloadColumn(),
+                TimeRemainingColumn(),
+                console=console,
             ) as progress:
-                # verify content file doesn't already exist
-                to_path = download_dir.joinpath(
-                    build_content_name(content, to_name)
-                    if to_name
-                    else content.filename
-                )
                 if not to_path.parent.is_dir():
-                    progress.bar_format = "{desc} " + (
-                        Colors.error | f"{to_path.parent} directory does not exist"
-                    )
-                    continue
+                    raise ValueError(f"{to_path.parent} does not exist")
 
                 if to_path.exists():
-                    # if no checksums are defined, let's assume the file is valid
                     if len(content.checksums) <= 0:
-                        progress.bar_format = "{desc} " + (
-                            Colors.error | f"{to_path} exists"
-                        )
-                        continue
+                        raise ValueError(f"{to_path} exists")
 
-                    # if checksums are defined, validate the file against one of them
                     first_checksum = content.checksums[0]
                     hash_type = HashType(first_checksum.type)
-                    if (
-                        hash_file(to_path, {hash_type})[hash_type]
-                        == first_checksum.hash
-                    ):
-                        progress.bar_format = "{desc} " + (
-                            Colors.error | f"{to_path} exists"
-                        )
-                        continue
+                    if hash_file(to_path, {hash_type})[hash_type] == first_checksum.value:
+                        raise ValueError(f"{to_path} exists")
 
-                # get the appropriate downloader
                 downloader = get_downloader(content)
+                download_task = progress.add_task("Downloading", total=content.size)
                 manifest = downloader.download_content(
-                    content, update_hook=progress.update
+                    content,
+                    update_hook=lambda chunk_size, _: progress.advance(download_task, chunk_size),
                 )
-                final_path = merge_manifest(plugin, manifest, to_path)
-                progress.bar_format = (
-                    f"{{desc}} {Colors.success | final_path.as_posix()}"
-                )
-    except Exception as exc:
-        echo(Colors.error | str(exc))
+
+                progress.stop()
+                with console.status(f"[debug]Writing {content.id} to {to_path}[/]"):
+                    write_content(plugin, manifest, to_path)
+    except Exception:
+        console.print_exception()
         raise
 
 
-@app.command("show")
-@log.catch()
-def show(
-    ctx: typer.Context,
-    from_url: str = typer.Argument(..., metavar="URL"),
-):
-    """
-    Show all available content from a URL.
+@app.command("list")
+def list(ctx: Context, from_url: str = Argument(..., metavar="URL")):
+    """List content available at a URL."""
 
-    $ megu show [URL]
-    """
-
+    console = get_console(ctx.color)
     url = normalize_url(from_url)
+    url_tree = Tree(f"[debug]{url}[/]")
 
-    echo = get_echo(ctx)
-    echo(f"{sty.bold | 'Show'} {Colors.info | url.url}\n")
-
-    # discover the appropriate plugin for the URL
     plugin = get_plugin(url)
-    echo(f"Using plugin {format_plugin(plugin)}\n\n")
 
     try:
-        for content_id, content in groupby(iter_content(url, plugin), lambda c: c.id):
-            echo(f"{Colors.success | content_id}\n")
-            for entry in sorted(content, key=lambda c: c.quality, reverse=True):
-                echo(f"  {format_content(entry)}\n")
+        for content_id, content in groupby(iter_content(plugin, url), lambda content: content.id):
+            content_tree = url_tree.add(f"[info]{content_id}[/]")
+            for content_item in sorted(content, key=lambda content: content.quality, reverse=True):
+                content_tree.add(
+                    Columns(
+                        [
+                            f"[success]{content_item.name}[/]",
+                            f"[debug]({content_item.type})[/]",
+                            f"[info]{format_filesize(content_item.size)}[/]",
+                        ]
+                    )
+                )
 
-            echo("\n")
-    except Exception as exc:
-        echo(Colors.error | str(exc))
+        console.print(url_tree)
+    except Exception:
+        console.print_exception()
         raise

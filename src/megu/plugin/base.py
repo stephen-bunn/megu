@@ -1,101 +1,37 @@
-# -*- encoding: utf-8 -*-
-# Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
-# GPLv3 License <https://choosealicense.com/licenses/gpl-3.0/>
-
-"""Contains the abstractions necessary for the plugin discovery to work."""
-
-import abc
+from abc import ABC, abstractmethod, abstractproperty
 from pathlib import Path
-from typing import Generator, Set
+from typing import Generator
 
-from ..models import Content, Manifest, Url
+from megu.models import URL, Content, ContentManifest
 
 
-class BasePlugin(abc.ABC):  # pragma: no cover
-    """The base plugin that all plugins should inherit from.
-
-    This class should mostly be excluded from testing as it should only ever define an
-    interface and not provide much if any implementation.
-    """
-
+class BasePlugin(ABC):
     def __str__(self) -> str:
-        """Build a human-friendly string representation of a plugin.
+        return f"{self.__class__.__qualname__}(name={self.name!r}, domains={self.domains!r})"
 
-        Returns:
-            str:
-                The human-friendly string representation of a plugin.
-        """
-
-        return (
-            f"{self.__class__.__qualname__!s}"
-            f"(name={self.name!r}, domains={self.domains!r})"
-        )
-
-    @abc.abstractproperty
+    @abstractproperty
     def name(self) -> str:
-        """Human readable name for the plugin."""
+        raise NotImplementedError(f"{self.__class__.__qualname__} must implement name property")
 
+    @abstractproperty
+    def domains(self) -> set[str]:
+        raise NotImplementedError(f"{self.__class__.__qualname__} must implement domains property")
+
+    @classmethod
+    @abstractmethod
+    def can_handle(cls, url: URL) -> bool:
         raise NotImplementedError(
-            f"{self.__class__.__qualname__!s} must implement name property"
+            f"{cls.__qualname__} must implement can_handle classmethod method"  # type: ignore
         )
 
-    @abc.abstractproperty
-    def domains(self) -> Set[str]:
-        """Set of domains that this plugin supports."""
-
+    @abstractmethod
+    def iter_content(self, url: URL) -> Generator[Content, None, None]:
         raise NotImplementedError(
-            f"{self.__class__.__qualname__!s} must implement domains property"
+            f"{self.__class__.__qualname__} must implement iter_content method"
         )
 
-    @abc.abstractmethod
-    def can_handle(self, url: Url) -> bool:
-        """Check if a given Url can be handled by the plugin.
-
-        Args:
-            url (~megu.models.content.Url):
-                The URL to check against the current plugin.
-
-        Returns:
-            bool:
-                True if the plugin can handle the given URL, otherwise False
-        """
-
+    @abstractmethod
+    def write_content(self, manifest: ContentManifest, to_path: Path) -> Path:
         raise NotImplementedError(
-            f"{self.__class__.__qualname__!s} must implement can_handle method"
-        )
-
-    @abc.abstractmethod
-    def extract_content(self, url: Url) -> Generator[Content, None, None]:
-        """Extract content from the given URL.
-
-        Args:
-            url (~megu.models.content.Url):
-                The URL to extract content from.
-
-        Yields:
-            :class:`~megu.models.content.Content`:
-                The discovered content from the given URL.
-        """
-
-        raise NotImplementedError(
-            f"{self.__class__.__qualname__!s} must implement extract_content method"
-        )
-
-    @abc.abstractmethod
-    def merge_manifest(self, manifest: Manifest, to_path: Path) -> Path:
-        """Merge downloaded artifacts from a manifest to a singular local filepath.
-
-        Args:
-            manifest (~megu.models.content.Manifest):
-                The manifest containing the content and its downloaded artifacts.
-            to_path (~pathlib.Path):
-                The path to merge to artifacts to.
-
-        Returns:
-            ~pathlib.Path:
-                The path the artifacts have been merged to.
-        """
-
-        raise NotImplementedError(
-            f"{self.__class__.__qualname__!s} must implement merge_manifest method"
+            f"{self.__class__.__qualname__} must implement write_content method"
         )

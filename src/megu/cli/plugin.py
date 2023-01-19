@@ -1,73 +1,106 @@
-# -*- encoding: utf-8 -*-
-# Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
-# GPLv3 License <https://choosealicense.com/licenses/gpl-3.0/>
+import re
+import sys
+import subprocess
+from pathlib import Path
+from shutil import rmtree, copytree
 
-"""Contains the plugin group of commands."""
+from rich.tree import Tree
+from rich.columns import Columns
+from typer import Typer, Context
 
-import typer
+from megu.config import APP_NAME, PLUGIN_DIRPATH
+from megu import iter_plugins
+from megu.helpers import temporary_directory
+from megu.cli.utils import get_console
 
-from ..config import instance as config
-from ..log import instance as log
-from ..plugin.discover import discover_plugins, iter_available_plugins
-from ..plugin.manage import add_plugin, remove_plugin
-from .style import Colors, Symbols
-from .ui import build_spinner, display_plugin
-from .utils import get_echo, is_debug_context
+DIST_INFO_PATTERN = re.compile(r"^(?P<package>" + APP_NAME + r"_.*)-.*\.dist-info$")
 
-plugin_app = typer.Typer(help="Control available plugins.")
+plugin_app = Typer(help="Control available plugins.")
 
 
-@plugin_app.command("add")
-@log.catch()
-def plugin_add(ctx: typer.Context, plugin: str):
+def _get_package_name(package_dirpath: Path) -> str | None:
+    if not package_dirpath.is_dir():
+        raise NotADirectoryError(f"No such directory {package_dirpath} exists")
+
+    for path in package_dirpath.iterdir():
+        if path.is_file():
+            continue
+
+        matches = DIST_INFO_PATTERN.match(path.name)
+        if matches is None:
+            continue
+
+        package_name = matches.groupdict().get("package", None)
+        if not package_name:
+            continue
+
+        return package_name
+
+    return None
+
+
+@plugin_app.command("install")
+def plugin_install(ctx: Context, plugin: str):
     """Install a plugin via pip."""
 
-    echo = get_echo(ctx)
-    with build_spinner(
-        ctx,
-        text=(
-            f"Installing plugin {Colors.success | plugin} via pip "
-            f"{Symbols.right_arrow} "
-        ),
-        side="right",
-        reraise=False,
-        report=False,
-    ) as spinner:
-        package_dirpath = add_plugin(
-            plugin, silence_subprocess=(not is_debug_context(ctx))
+    console = get_console(ctx.color)
+    with console.status(f"Install Plugin [info]{plugin}[/info]"), temporary_directory(
+        "plugin-install-"
+    ) as temp_dirpath:
+        subprocess.check_call(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                plugin,
+                "--target",
+                temp_dirpath.as_posix(),
+                "--progress-bar",
+                "off",
+                "--no-color",
+                "--quiet",
+                "--no-input",
+                "--exists-action",
+                "i",
+            ]
         )
-        spinner.ok(Colors.success | package_dirpath)
-        echo("\n")
-        for package_name, plugins in discover_plugins(package_dirpath):
-            display_plugin(ctx, package_name, plugins)
+
+        package_name = _get_package_name(temp_dirpath)
+        if package_name is None:
+            raise ValueError(f"Failed to extract package name from package at {temp_dirpath}")
+
+        package_dirpath = PLUGIN_DIRPATH.joinpath(package_name)
+        if package_dirpath.is_dir():
+            raise IsADirectoryError(f"Plugin directory at {package_dirpath} already exists")
+
+        copytree(temp_dirpath, package_dirpath)
 
 
-@plugin_app.command("remove")
-@log.catch()
-def plugin_remove(ctx: typer.Context, plugin: str):
-    """Remove an installed plugin."""
+@plugin_app.command("uninstall")
+def plugin_uninstall(ctx: Context, plugin: str):
+    """Uninstall a plugin."""
 
-    with build_spinner(
-        ctx,
-        text=f"Remove Plugin {Colors.success | plugin} {Symbols.right_arrow} ",
-        side="right",
-        reraise=False,
-    ):
-        remove_plugin(plugin)
+    console = get_console(ctx.color)
+    with console.status(f"Uninstall Plugin [info]{plugin}[/]"):
+        package_dirpath = PLUGIN_DIRPATH.joinpath(plugin)
+        if not package_dirpath.is_dir():
+            console.print(f"No plugin {plugin} exists", style="error")
+            return
+
+        rmtree(package_dirpath)
 
 
 @plugin_app.command("list")
-@log.catch()
-def plugin_list(ctx: typer.Context):
-    """List available plugins."""
+def plugin_list(ctx: Context):
+    """List installed plugins."""
 
-    echo = get_echo(ctx, nl=True)
-    echo(f"List Plugins {Colors.debug | config.plugin_dir}\n")
+    console = get_console(ctx.color)
+    plugin_tree = Tree(f"[debug]{PLUGIN_DIRPATH}[/]")
+    for plugin_module, plugins in iter_plugins(PLUGIN_DIRPATH):
+        module_tree = plugin_tree.add(f"[info]{plugin_module}[/]")
+        for plugin in plugins:
+            module_tree.add(Columns([f"[success]{plugin.name}[/]", f"[debug]{plugin.domains}[/]"]))
 
-    plugin_count = 0
-    for package_name, plugins in iter_available_plugins(config.plugin_dir):
-        plugin_count += 1
-        display_plugin(ctx, package_name, plugins)
-    else:
-        if plugin_count <= 0:
-            echo(Colors.error | "No available plugins")
+    console.print(plugin_tree)
