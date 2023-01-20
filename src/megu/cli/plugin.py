@@ -11,7 +11,7 @@ from rich.tree import Tree
 from typer import Context, Typer
 
 from megu import iter_plugins
-from megu.cli.utils import get_console
+from megu.cli.utils import get_console, get_context_param
 from megu.config import APP_NAME, PLUGIN_DIRPATH
 from megu.helpers import temporary_directory
 
@@ -45,7 +45,7 @@ def _get_package_name(package_dirpath: Path) -> str | None:
 def plugin_install(ctx: Context, plugin: str):
     """Install a plugin via pip."""
 
-    console = get_console(ctx.color)
+    console = get_console(get_context_param(ctx, "color", True))
     with console.status(f"Install Plugin [info]{plugin}[/info]"), temporary_directory(
         "plugin-install-"
     ) as temp_dirpath:
@@ -73,7 +73,9 @@ def plugin_install(ctx: Context, plugin: str):
         if package_name is None:
             raise ValueError(f"Failed to extract package name from package at {temp_dirpath}")
 
-        package_dirpath = PLUGIN_DIRPATH.joinpath(package_name)
+        package_dirpath = get_context_param(ctx, "plugin_dir", PLUGIN_DIRPATH).joinpath(
+            package_name
+        )
         if package_dirpath.is_dir():
             raise IsADirectoryError(f"Plugin directory at {package_dirpath} already exists")
 
@@ -84,9 +86,9 @@ def plugin_install(ctx: Context, plugin: str):
 def plugin_uninstall(ctx: Context, plugin: str):
     """Uninstall a plugin."""
 
-    console = get_console(ctx.color)
+    console = get_console(get_context_param(ctx, "color", True))
     with console.status(f"Uninstall Plugin [info]{plugin}[/]"):
-        package_dirpath = PLUGIN_DIRPATH.joinpath(plugin)
+        package_dirpath = get_context_param(ctx, "plugin_dir", PLUGIN_DIRPATH).joinpath(plugin)
         if not package_dirpath.is_dir():
             console.print(f"No plugin {plugin} exists", style="error")
             return
@@ -98,9 +100,10 @@ def plugin_uninstall(ctx: Context, plugin: str):
 def plugin_list(ctx: Context):
     """List installed plugins."""
 
-    console = get_console(ctx.color)
-    plugin_tree = Tree(f"[debug]{PLUGIN_DIRPATH}[/]")
-    for plugin_module, plugins in iter_plugins(PLUGIN_DIRPATH):
+    console = get_console(get_context_param(ctx, "color", True))
+    plugin_dir = get_context_param(ctx, "plugin_dir", PLUGIN_DIRPATH)
+    plugin_tree = Tree(f"[debug]{plugin_dir}[/]")
+    for plugin_module, plugins in iter_plugins(plugin_dir):
         module_tree = plugin_tree.add(f"[info]{plugin_module}[/]")
         for plugin in plugins:
             module_tree.add(Columns([f"[success]{plugin.name}[/]", f"[debug]{plugin.domains}[/]"]))

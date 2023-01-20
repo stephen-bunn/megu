@@ -2,7 +2,9 @@
 
 import re
 from functools import lru_cache, partial
+from typing import Any, TypeVar
 
+from click import Context
 from glom import PathAccessError, glom
 from glom.core import _MISSING as glom_MISSING
 from rich.console import Console
@@ -10,6 +12,30 @@ from rich.theme import Theme
 
 from megu.filters import best_content, specific_content
 from megu.models import Content, ContentFilter
+
+T = TypeVar("T")
+
+
+def get_context_param(ctx: Context, key: str, default: T) -> T:
+    """Get the value of a parameter from the root context.
+
+    A default MUST be provided, as we cannot verify that the root context will always contain the
+    given key.
+
+    Args:
+        ctx (Context): The context provided to the command.
+        key (str): The key of the parameter from the root context.
+        default (T): The default value if the context does not provide a specific parameter.
+
+    Returns:
+        T: The value of the key from the root context.
+    """
+
+    working_ctx = ctx
+    while working_ctx.parent is not None:
+        working_ctx = working_ctx.parent
+
+    return working_ctx.params.get(key, default)
 
 
 @lru_cache(maxsize=1)

@@ -19,8 +19,8 @@ from typer import Argument, Context, Option, Typer
 
 from megu import get_downloader, get_plugin, iter_content, normalize_url, write_content
 from megu.cli.plugin import plugin_app
-from megu.cli.utils import build_content_filter, build_content_name, get_console
-from megu.config import DOWNLOAD_DIRPATH
+from megu.cli.utils import build_content_filter, build_content_name, get_console, get_context_param
+from megu.config import DOWNLOAD_DIRPATH, PLUGIN_DIRPATH
 from megu.hash import HashType, hash_file
 
 app = Typer(context_settings={"help_option_names": ["-h", "--help"]})
@@ -28,7 +28,11 @@ app.add_typer(plugin_app, name="plugin")
 
 
 @app.callback()
-def main(ctx: Context, color: bool = Option(default=True, help="Enable color output.")):
+def main(
+    ctx: Context,
+    color: bool = Option(default=True, help="Enable color output."),
+    plugin_dir: Path = Option(default=PLUGIN_DIRPATH, help="The directory containing plugins."),
+):
     ...
 
 
@@ -63,9 +67,9 @@ def get(
 ):
     """Download content from a URL."""
 
-    console = get_console(ctx.color)
+    console = get_console(get_context_param(ctx, "color", True))
     url = normalize_url(from_url)
-    plugin = get_plugin(url)
+    plugin = get_plugin(url, plugin_dirpath=get_context_param(ctx, "plugin_dir", PLUGIN_DIRPATH))
 
     content_filter = build_content_filter(quality=quality, type=type)
     try:
@@ -115,11 +119,11 @@ def get(
 def list(ctx: Context, from_url: str = Argument(..., metavar="URL")):
     """List content available at a URL."""
 
-    console = get_console(ctx.color)
+    console = get_console(get_context_param(ctx, "color", True))
     url = normalize_url(from_url)
     url_tree = Tree(f"[debug]{url}[/]")
 
-    plugin = get_plugin(url)
+    plugin = get_plugin(url, plugin_dirpath=get_context_param(ctx, "plugin_dir", PLUGIN_DIRPATH))
 
     try:
         for content_id, content in groupby(iter_content(plugin, url), lambda content: content.id):
