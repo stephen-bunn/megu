@@ -1,5 +1,7 @@
-from tempfile import gettempdir
+"""This module contains configuration globals used throughout the library."""
+
 from pathlib import Path
+from tempfile import gettempdir
 
 from appdirs import AppDirs
 

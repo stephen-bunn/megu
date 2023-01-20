@@ -1,17 +1,19 @@
+"""This module contains the plugin-specific app and commands."""
+
 import re
-import sys
 import subprocess
+import sys
 from pathlib import Path
-from shutil import rmtree, copytree
+from shutil import copytree, rmtree
 
-from rich.tree import Tree
 from rich.columns import Columns
-from typer import Typer, Context
+from rich.tree import Tree
+from typer import Context, Typer
 
-from megu.config import APP_NAME, PLUGIN_DIRPATH
 from megu import iter_plugins
-from megu.helpers import temporary_directory
 from megu.cli.utils import get_console
+from megu.config import APP_NAME, PLUGIN_DIRPATH
+from megu.helpers import temporary_directory
 
 DIST_INFO_PATTERN = re.compile(r"^(?P<package>" + APP_NAME + r"_.*)-.*\.dist-info$")
 

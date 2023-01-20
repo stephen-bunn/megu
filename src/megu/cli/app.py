@@ -1,25 +1,27 @@
+"""This module contains the base CLI app and commands."""
+
 from itertools import groupby
 from pathlib import Path
 from typing import Optional
 
-from rich.tree import Tree
 from rich.columns import Columns
+from rich.filesize import decimal as format_filesize
 from rich.progress import (
-    Progress,
-    TextColumn,
     BarColumn,
     DownloadColumn,
+    Progress,
     TaskProgressColumn,
+    TextColumn,
     TimeRemainingColumn,
 )
-from rich.filesize import decimal as format_filesize
-from typer import Typer, Context, Option, Argument
+from rich.tree import Tree
+from typer import Argument, Context, Option, Typer
 
-from megu import normalize_url, get_plugin, get_downloader, iter_content, write_content
-from megu.hash import hash_file, HashType
-from megu.config import DOWNLOAD_DIRPATH
-from megu.cli.utils import get_console, build_content_filter, build_content_name
+from megu import get_downloader, get_plugin, iter_content, normalize_url, write_content
 from megu.cli.plugin import plugin_app
+from megu.cli.utils import build_content_filter, build_content_name, get_console
+from megu.config import DOWNLOAD_DIRPATH
+from megu.hash import HashType, hash_file
 
 app = Typer(context_settings={"help_option_names": ["-h", "--help"]})
 app.add_typer(plugin_app, name="plugin")

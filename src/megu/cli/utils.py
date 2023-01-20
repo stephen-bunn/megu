@@ -1,18 +1,28 @@
-import re
-from typing import Callable, Generator
-from functools import partial, lru_cache
+"""This module contains utilities used by the CLI."""
 
-from rich.console import Console
-from rich.theme import Theme
+import re
+from functools import lru_cache, partial
+
 from glom import PathAccessError, glom
 from glom.core import _MISSING as glom_MISSING
+from rich.console import Console
+from rich.theme import Theme
 
 from megu.filters import best_content, specific_content
-from megu.models import Content
+from megu.models import Content, ContentFilter
 
 
 @lru_cache(maxsize=1)
 def get_console(color: bool | None) -> Console:
+    """Get the appropriate rich console to use for printing output.
+
+    Args:
+        color (bool | None): False indicates color should be disabled.
+
+    Returns:
+        Console: The rich console instance to use for printing output.
+    """
+
     return Console(
         theme=Theme(
             {
@@ -28,9 +38,15 @@ def get_console(color: bool | None) -> Console:
     )
 
 
-def build_content_filter(
-    **conditions,
-) -> Callable[[Generator[Content, None, None]], Generator[Content, None, None]]:
+def build_content_filter(**conditions) -> ContentFilter:
+    """Build a content filter given conditions from the CLI.
+
+    If no conditions are provided, the default content filter is :func:`~megu.filters.best_content`.
+
+    Returns:
+        ContentFilter: The content filter to use for filtering content.
+    """
+
     if len(conditions) <= 0:
         return best_content
 
@@ -42,6 +58,24 @@ def build_content_filter(
 
 
 def build_content_name(content: Content, to_name: str, default: str | None = None) -> str:
+    """Build the content name to use for the downloaded content.
+
+    Args:
+        content (Content):
+            The content being downloaded.
+        to_name (str):
+            The name format of the content to save the downloaded content to.
+        default (str | None, optional):
+            The fallback name if the content name could not be built. Defaults to None.
+
+    Raises:
+        ValueError: If the content name could not be built and no default is provided.
+        ValueError: If building the content name fails.
+
+    Returns:
+        str: The built content name to write the content to.
+    """
+
     content_name = to_name
     for match in re.finditer(r"{(\w+(?:\.\w+)?)}", to_name):
         try:

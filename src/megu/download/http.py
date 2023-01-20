@@ -1,38 +1,59 @@
+"""This module contains a simple HTTP downloader for HTTP resources."""
+
 import re
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from copy import copy
+from functools import partial
 from pathlib import Path
 from typing import Generator
-from concurrent.futures import Future, ThreadPoolExecutor, as_completed
-from functools import partial
 
 from httpx import Client, Response
 
-from megu.models import HttpResource
 from megu.config import STAGING_DIRPATH
-from megu.helpers import allocate_storage
 from megu.download.base import BaseDownloader
+from megu.helpers import allocate_storage
+from megu.models import Content, ContentManifest, HttpResource
 from megu.types import UpdateHook
-from megu.models import Content, ContentManifest
 
 DEFAULT_CHUNK_SIZE = 4096
 DEFAULT_MAX_CONNECTIONS = 8
-
 CONTENT_RANGE_PATTERN = re.compile(
     r"^(?P<unit>.*)\s+(?:(?:(?P<start>\d+)-(?P<end>\d+))|\*)\/(?P<size>\d+|\*)$"
 )
 
 
-class HttpDownloader(BaseDownloader):
+class HTTPDownloader(BaseDownloader):
+    """Basic downloader for HTTP resources."""
+
     @property
     def name(self) -> str:
+        """The name of the downloader."""
+
         return "HTTP Downloader"
 
     @classmethod
     def can_handle(cls, content: Content) -> bool:  # type: ignore
+        """Determine if the downloader can handle the given content.
+
+        This makes sure that all resources are :class:`~megu.models.HttpResource` instances.
+
+        Args:
+            content (Content): The content to check if it can be handled by the HTTP Downloader.
+
+        Returns:
+            bool: True if the HTTP downloader can handle the provided content.
+        """
+
         return all(isinstance(resource, HttpResource) for resource in content.resources)
 
     @property
     def session(self) -> Client:
+        """An instance-cahced httpx.Client instance.
+
+        Returns:
+            Client: The client to use for fetching resources.
+        """
+
         if not hasattr(self, "_session"):
             self._session = Client()
         return self._session
@@ -44,6 +65,18 @@ class HttpDownloader(BaseDownloader):
         size: int | None = None,
         chunk_size: int | None = None,
     ) -> Generator[tuple[int, int], None, None]:
+        """Iterate over byte ranges for a given start, end, total size, and chunk size.
+
+        Args:
+            start (int): The starting bytes.
+            end (int): The ending bytes.
+            size (int | None, optional): The total bytes. Defaults to None.
+            chunk_size (int | None, optional): The byte chunk size. Defaults to None.
+
+        Yields:
+            tuple[int, int]: A tuple containing the following starting and ending bytes
+        """
+
         while end <= size if size is not None else True:
             if start > end:
                 break
@@ -58,6 +91,16 @@ class HttpDownloader(BaseDownloader):
             end = next_end
 
     def _request_resource(self, resource: HttpResource, stream: bool = True) -> Response:
+        """Make a request for the given resource.
+
+        Args:
+            resource (HttpResource): The resource to request.
+            stream (bool, optional): Whether or not to stream the result. Defaults to True.
+
+        Returns:
+            Response: The response of the requested resource.
+        """
+
         return self.session.send(resource, stream=stream)
 
     def _download_normal(
@@ -68,6 +111,24 @@ class HttpDownloader(BaseDownloader):
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         update_hook: UpdateHook | None = None,
     ) -> Path:
+        """Download the HTTP resource assuming it is not a partial resource.
+
+        Args:
+            resource (HttpResource):
+                The resource to download.
+            response (Response):
+                The response of the requested resourcce.
+            to_path (Path):
+                The path to download the resource to.
+            chunk_size (int, optional):
+                The chunk size to write the content out with. Defaults to DEFAULT_CHUNK_SIZE.
+            update_hook (UpdateHook | None, optional):
+                The update hook to report on download progress. Defaults to None.
+
+        Returns:
+            Path: The filepath the resource was written out to.
+        """
+
         resource_size = None
         if "Content-Length" in response.headers:
             resource_size = int(response.headers["Content-Length"])
@@ -82,7 +143,7 @@ class HttpDownloader(BaseDownloader):
 
         return to_path
 
-    def _download_partial(
+    def _download_partial(  # noqa: C901
         self,
         resource: HttpResource,
         response: Response,
@@ -90,6 +151,27 @@ class HttpDownloader(BaseDownloader):
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         update_hook: UpdateHook | None = None,
     ) -> Path:
+        """Download the HTTP resource assuming it is a partial resource.
+
+        Args:
+            resource (HttpResource):
+                The partial resource to download.
+            response (Response):
+                The response for the partial resource.
+            to_path (Path):
+                The filepath to write the downloaded resource to.
+            chunk_size (int, optional):
+                The chunk size to write the content out with. Defaults to DEFAULT_CHUNK_SIZE.
+            update_hook (UpdateHook | None, optional):
+                The update hook to report on download progress. Defaults to None.
+
+        Raises:
+            ValueError: If the iteration of the next partial resource byte ranges fail.
+            ValueError: If the request for the next partial resource fails.
+
+        Returns:
+            Path: The filepath the content was written out to.
+        """
 
         # in the worst case scenarios where the partial request is not formatted according to the
         # HTTP 206 RFC, we can attempt to fallback to the standard HTTP 200 downloader callable
@@ -175,6 +257,31 @@ class HttpDownloader(BaseDownloader):
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         update_hook: UpdateHook | None = None,
     ) -> tuple[int, HttpResource, Path]:
+        """Download the given HTTP resource to the provided filepath.
+
+        Args:
+            resource (HttpResource):
+                The resource to download.
+            resource_index (int):
+                The index of the resource being downloaded (to preserve ordering).
+            to_path (Path):
+                The filepath to write the resource data out to.
+            chunk_size (int, optional):
+                The chunk size to write the content out with. Defaults to DEFAULT_CHUNK_SIZE.
+            update_hook (UpdateHook | None, optional):
+                The update hook to report on download progress. Defaults to None.
+
+        Raises:
+            ValueError: If the request for the resource resolves to a failing status code.
+            ValueError: If the request for the resource has no content.
+            ValueError: If the request for the resource resolves to an unhandled status code.
+
+        Returns:
+            tuple[int, HttpResource, Path]:
+                A tuple containing the resource index, the resource, and the path the content was
+                downloaded to.
+        """
+
         status_handlers = {200: self._download_normal, 206: self._download_partial}
 
         response = self._request_resource(resource)
@@ -213,6 +320,20 @@ class HttpDownloader(BaseDownloader):
         staging_dirpath: Path | None = None,
         update_hook: UpdateHook | None = None,
     ) -> ContentManifest:
+        """Download the provided content to the given staging directory.
+
+        Args:
+            content (Content):
+                The content to download.
+            staging_dirpath (Path | None, optional):
+                The directory to place downloaded artifacts in. Defaults to None.
+            update_hook (UpdateHook | None, optional):
+                The update hook to update on progress. Defaults to None.
+
+        Returns:
+            ContentManifest: The content manifest containing downloaded artifacts.
+        """
+
         resource_results: list[tuple[int, HttpResource, Path]] = []
         resource_futures: dict[Future[tuple[int, HttpResource, Path]], HttpResource] = {}
 
