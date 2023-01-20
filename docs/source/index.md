@@ -18,5 +18,12 @@ Discovering and extracting content descriptors for concrete media-hosting sites 
 installation
 usage
 plugins
+```
+
+```{toctree}
+---
+maxdepth: 2
+---
+
 reference
 ```
