@@ -1,22 +1,14 @@
-# -*- encoding: utf-8 -*-
-# Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
-# GPLv3 License <https://choosealicense.com/licenses/gpl-3.0/>
-
-"""Contains custom hypothesis strategies for packaging testing."""
-
 import string
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Type
 
 from hypothesis.provisional import urls
 from hypothesis.strategies import (
+    DrawFn,
     SearchStrategy,
     binary,
-    booleans,
     builds,
-    complex_numbers,
     composite,
     datetimes,
     floats,
@@ -30,328 +22,153 @@ from hypothesis.strategies import (
     text,
     uuids,
 )
-from requests import Request, Response
 
-from megu.hasher import HashType, hash_io
-from megu.models import Checksum, Content, HttpMethod, HttpResource, Meta, Url
-from megu.models.content import Resource
+from megu.hash import HashType, hash_io
+from megu.models import URL, Content, ContentChecksum, ContentMetadata, HTTPResource
 
-# Using a port of 0 is "technically" valid in the RFC, but not valid for parsers
-DEFAULT_URL_STRATEGY = urls().filter(lambda x: ":0" not in x)
-VALID_MIMETYPES = (
-    "image/bmp",
-    "image/gif",
-    "image/jpeg",
-    "image/png",
-    "image/svg+xml",
-    "image/tiff",
-    "image/webp",
-    "video/mpeg",
-    "video/ogg",
-    "video/mp2t",
-    "video/webm",
-    "video/3gpp",
-    "video/3gpp2",
-    "video/x-msvideo",
-    "audio/midi",
-    "audio/x-midi",
-    "audio/mpeg",
-    "audio/ogg",
-    "audio/opus",
-    "audio/wav",
-    "audio/webm",
-    "audio/3gpp",
-    "audio/3gpp2",
-    "audio/acc",
+DEFAULT_URL_STRAT = urls().filter(lambda x: ":0" not in x)
+DEFAULT_NAME_STRAT = text(string.ascii_letters + string.digits, min_size=1, max_size=20)
+DEFAULT_MIMETYPES_STRAT = sampled_from(
+    [
+        "image/bmp",
+        "image/gif",
+        "image/jpeg",
+        "image/png",
+        "image/svg+xml",
+        "image/tiff",
+        "image/webp",
+        "video/mpeg",
+        "video/ogg",
+        "video/mp2t",
+        "video/webm",
+        "video/3gpp",
+        "video/3gpp2",
+        "video/x-msvideo",
+        "audio/midi",
+        "audio/x-midi",
+        "audio/mpeg",
+        "audio/ogg",
+        "audio/opus",
+        "audio/wav",
+        "audio/webm",
+        "audio/3gpp",
+        "audio/3gpp2",
+        "audio/acc",
+    ]
 )
 
 
 @composite
-def builtin_types(
-    draw, include: Optional[List[Type]] = None, exclude: Optional[List[Type]] = None
-) -> Any:
-    """Composite strategy for building an instance of a builtin type.
-
-    This strategy allows you to check against builtin types for when you need to do
-    variable validation (which should be rare). By default this composite will generate
-    all available types of builtins, however you can either tell it to only generate
-    some types or exclude some types. You do this using the ``include`` and ``exclude``
-    parameters.
-
-    For example using the ``include`` parameter like the following will ONLY generate
-    strings and floats for the samples:
-
-    >>> @given(builtin_types(include=[str, float]))
-    ... def test_only_strings_and_floats(value: Union[str, float]):
-    ...     assert isinstance(value, (str, float))
-
-    Similarly, you can specify to NOT generate Nones and complex numbers like the
-    following example:
-
-    >>> @given(builtin_types(exclude=[None, complex]))
-    ... def test_not_none_or_complex(value: Any):
-    ...     assert value and not isinstance(value, complex)
-    """
-
-    strategies: Dict[Any, SearchStrategy[Any]] = {
-        None: none(),
-        int: integers(),
-        bool: booleans(),
-        float: floats(allow_nan=False),
-        tuple: builds(tuple),
-        list: builds(list),
-        set: builds(set),
-        frozenset: builds(frozenset),
-        str: text(),
-        bytes: binary(),
-        complex: complex_numbers(),
-    }
-
-    to_use = set(strategies.keys())
-    if include and len(include) > 0:
-        to_use = set(include)
-
-    if exclude and len(exclude) > 0:
-        to_use = to_use - set(exclude)
-
-    return draw(
-        one_of([strategy for key, strategy in strategies.items() if key in to_use])
-    )
+def path(draw: DrawFn) -> Path:
+    return Path(*draw(DEFAULT_NAME_STRAT))
 
 
 @composite
-def pythonic_name(draw, name_strategy: Optional[SearchStrategy[str]] = None) -> str:
-    """Composite strategy for building a Python valid variable / class name."""
-
-    return draw(
-        from_regex(r"\A[a-zA-Z]+[a-zA-Z0-9\_]*\Z")
-        if not name_strategy
-        else name_strategy
-    )
+def hash_type(draw: DrawFn, type_strat: SearchStrategy[HashType] | None = None) -> HashType:
+    return draw(type_strat or sampled_from(HashType))
 
 
 @composite
-def pathlib_path(draw) -> Path:
-    """Composite strategy for building a random ``pathlib.Path`` instance."""
-
-    return Path(*draw(lists(pythonic_name(), min_size=1)))
-
-
-HashType_strategy = sampled_from(HashType).filter(
-    lambda hash_type: hash_type != HashType._HashType__available_hashers  # type: ignore
-)
-
-
-@composite
-def hash_type(
-    draw, hash_type_strategy: Optional[SearchStrategy[HashType]] = None
-) -> HashType:
-    """Composite strategy for fetching a :class:`~megu.hasher.HashType`."""
-
-    return draw(HashType_strategy if not hash_type_strategy else hash_type_strategy)
-
-
-@composite
-def hash_hexdigest(
-    draw,
-    hash_type_strategy: Optional[SearchStrategy[HashType]] = None,
-    content_strategy: Optional[SearchStrategy[bytes]] = None,
+def hash_value(
+    draw: DrawFn,
+    type_strat: SearchStrategy[HashType] | None = None,
+    content_strat: SearchStrategy[bytes] | None = None,
 ) -> str:
-    """Composite strategy for building a hash hexdigest."""
+    _type = draw(hash_type(type_strat=type_strat))
+    content = BytesIO(draw(content_strat or binary(min_size=1)))
 
-    type_ = draw(hash_type(hash_type_strategy=hash_type_strategy))
-    content = BytesIO(
-        draw(binary(min_size=1) if not content_strategy else content_strategy)
-    )
-    return hash_io(content, {type_})[type_]
+    return hash_io(content, {_type})[_type]
 
 
 @composite
-def requests_request(
-    draw,
-    method_strategy: Optional[SearchStrategy[str]] = None,
-    url_strategy: Optional[SearchStrategy[str]] = None,
-    headers_strategy: Optional[SearchStrategy[dict]] = None,
-) -> Request:
-    """Composite strategy for building a basic requests Request instance."""
+def url(draw: DrawFn, url_strat: SearchStrategy[str] | None = None) -> URL:
+    return URL(draw(url_strat or DEFAULT_URL_STRAT))
 
-    return Request(
+
+@composite
+def http_resource(
+    draw: DrawFn,
+    method_strat: SearchStrategy[str] | None = None,
+    url_strat: SearchStrategy[URL] | None = None,
+    headers_strat: SearchStrategy[dict[str, str]] | None = None,
+    content_strat: SearchStrategy[bytes] | None = None,
+) -> HTTPResource:
+    return HTTPResource(
         method=draw(
-            method_strategy
-            if method_strategy
-            else sampled_from(list(HttpMethod.__members__.keys()))
-        ),
-        url=draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY),
-        headers=draw(headers_strategy if headers_strategy else builds(dict)),
-    )
-
-
-@composite
-def requests_response(
-    draw,
-    status_code_strategy: Optional[SearchStrategy[int]] = None,
-    headers_strategy: Optional[SearchStrategy[Dict[str, str]]] = None,
-    url_strategy: Optional[SearchStrategy[str]] = None,
-    raw_strategy: Optional[SearchStrategy[bytes]] = None,
-) -> Response:
-    """Composite strategy for building a basic requests Response instance."""
-
-    resp = Response()
-    resp.__setstate__(  # type: ignore
-        {
-            "status_code": draw(
-                status_code_strategy if status_code_strategy else just(200)
-            ),
-            "url": draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY),
-            "headers": draw(headers_strategy if headers_strategy else builds(dict)),
-            "_content": draw(
-                raw_strategy if raw_strategy else binary(min_size=0, max_size=1024)
-            ),
-        }
-    )
-
-    return resp
-
-
-@composite
-def megu_url(draw, url_strategy: Optional[SearchStrategy[str]] = None) -> Url:
-    """Composite strategy for building a megu Url model."""
-
-    return Url(draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY))
-
-
-@composite
-def megu_checksum(
-    draw,
-    type_strategy: Optional[SearchStrategy[HashType]] = None,
-    hash_strategy: Optional[SearchStrategy[bytes]] = None,
-) -> Checksum:
-    """Composite strategy for building a megu Checksum model."""
-
-    type_ = draw(hash_type(hash_type_strategy=type_strategy))
-    return Checksum(
-        type=type_,
-        hash=draw(
-            hash_hexdigest(
-                hash_type_strategy=just(type_),
-                content_strategy=hash_strategy,
+            method_strat
+            or sampled_from(
+                ["GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"]
             )
         ),
+        url=draw(url_strat or DEFAULT_URL_STRAT),
+        headers=draw(headers_strat or builds(dict)),
+        content=draw(content_strat or none()),
     )
 
 
 @composite
-def megu_meta(
-    draw,
-    id_strategy: Optional[SearchStrategy[str]] = None,
-    title_strategy: Optional[SearchStrategy[str]] = None,
-    description_strategy: Optional[SearchStrategy[str]] = None,
-    publisher_strategy: Optional[SearchStrategy[str]] = None,
-    published_at_strategy: Optional[SearchStrategy[datetime]] = None,
-    duration_strategy: Optional[SearchStrategy[int]] = None,
-    filename_strategy: Optional[SearchStrategy[str]] = None,
-    thumbnail_strategy: Optional[SearchStrategy[str]] = None,
-) -> Meta:
-    """Composite strategy for building a megu Meta model."""
-
-    optional_str_strategy = one_of(text(), none())
-    return Meta(
-        id=draw(id_strategy if id_strategy else optional_str_strategy),
-        title=draw(title_strategy if title_strategy else optional_str_strategy),
-        description=draw(
-            description_strategy if description_strategy else optional_str_strategy
-        ),
-        publisher=draw(
-            publisher_strategy if publisher_strategy else optional_str_strategy
-        ),
-        published_at=draw(
-            published_at_strategy
-            if published_at_strategy
-            else one_of(datetimes() or none())
-        ),
-        duration=draw(
-            duration_strategy
-            if duration_strategy
-            else one_of(integers(min_value=0), none())
-        ),
-        filename=draw(
-            filename_strategy if filename_strategy else optional_str_strategy
-        ),
-        thumbnail=draw(
-            thumbnail_strategy
-            if thumbnail_strategy
-            else one_of(DEFAULT_URL_STRATEGY, none())
-        ),
+def content_checksum(
+    draw: DrawFn,
+    type_strat: SearchStrategy[HashType] | None = None,
+    content_strat: SearchStrategy[bytes] | None = None,
+) -> ContentChecksum:
+    _type = draw(hash_type(type_strat=type_strat))
+    return ContentChecksum(
+        type=_type.value,
+        value=draw(hash_value(type_strat=just(_type), content_strat=content_strat)),
     )
 
 
 @composite
-def megu_http_resource(
-    draw,
-    method_strategy: Optional[SearchStrategy[HttpMethod]] = None,
-    url_strategy: Optional[SearchStrategy[str]] = None,
-    headers_strategy: Optional[SearchStrategy[Dict[str, str]]] = None,
-    data_strategy: Optional[SearchStrategy[bytes]] = None,
-    auth_strategy: Optional[SearchStrategy[Callable[[Request], Request]]] = None,
-) -> HttpResource:
-    """Composite strategy for building a megu HttpResource model."""
-
-    return HttpResource(
-        method=draw(method_strategy if method_strategy else sampled_from(HttpMethod)),
-        url=draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY),
-        headers=draw(headers_strategy if headers_strategy else builds(dict)),
-        data=draw(data_strategy if data_strategy else none()),
-        auth=draw(auth_strategy if auth_strategy else none()),
+def content_metadata(
+    draw: DrawFn,
+    id_strat: SearchStrategy[str] | None = None,
+    title_strat: SearchStrategy[str] | None = None,
+    description_strat: SearchStrategy[str] | None = None,
+    publisher_strat: SearchStrategy[str] | None = None,
+    published_at_strat: SearchStrategy[datetime] | None = None,
+    duration_strat: SearchStrategy[int] | None = None,
+    filename_strat: SearchStrategy[str] | None = None,
+    thumbnail_strat: SearchStrategy[URL] | None = None,
+) -> ContentMetadata:
+    optional_string_strat = one_of(text(), none())
+    return ContentMetadata(
+        id=draw(id_strat or optional_string_strat),
+        title=draw(title_strat or optional_string_strat),
+        description=draw(description_strat or optional_string_strat),
+        publisher=draw(publisher_strat or optional_string_strat),
+        published_at=draw(published_at_strat or one_of(datetimes(), none())),
+        duration=draw(duration_strat or one_of(integers(min_value=0), none())),
+        filename=draw(filename_strat or optional_string_strat),
+        thumbnail=draw(thumbnail_strat or one_of(DEFAULT_URL_STRAT, none())),
     )
 
 
 @composite
-def megu_content(
-    draw,
-    id_strategy: Optional[SearchStrategy[str]] = None,
-    name_strategy: Optional[SearchStrategy[str]] = None,
-    url_strategy: Optional[SearchStrategy[str]] = None,
-    quality_strategy: Optional[SearchStrategy[float]] = None,
-    size_strategy: Optional[SearchStrategy[int]] = None,
-    type_strategy: Optional[SearchStrategy[str]] = None,
-    extension_strategy: Optional[SearchStrategy[str]] = None,
-    resources_strategy: Optional[SearchStrategy[List[Resource]]] = None,
-    meta_strategy: Optional[SearchStrategy[Meta]] = None,
-    checksum_strategy: Optional[SearchStrategy[List[Checksum]]] = None,
-    extra_strategy: Optional[SearchStrategy[dict]] = None,
+def content(
+    draw: DrawFn,
+    id_strat: SearchStrategy[str] | None = None,
+    name_strat: SearchStrategy[str] | None = None,
+    url_strat: SearchStrategy[URL] | None = None,
+    quality_strat: SearchStrategy[float] | None = None,
+    size_strat: SearchStrategy[int] | None = None,
+    type_strat: SearchStrategy[str] | None = None,
+    extension_strat: SearchStrategy[str] | None = None,
+    resources_strat: SearchStrategy[list[HTTPResource]] | None = None,
+    metadata_strat: SearchStrategy[ContentMetadata] | None = None,
+    checksums_strat: SearchStrategy[list[ContentChecksum]] | None = None,
+    extra_strat: SearchStrategy[dict] | None = None,
 ) -> Content:
-    """Composite strategy for building a megu Content model."""
-
     return Content(
-        id=str(draw(id_strategy if id_strategy else uuids(version=4))),
-        name=draw(
-            name_strategy if name_strategy else text(string.printable, min_size=1)
-        ),
-        url=draw(url_strategy if url_strategy else DEFAULT_URL_STRATEGY),
-        quality=draw(
-            quality_strategy
-            if quality_strategy
-            else floats(min_value=0, allow_nan=False)
-        ),
-        size=draw(
-            size_strategy if size_strategy else integers(min_value=1, max_value=1024)
-        ),
-        type=draw(type_strategy if type_strategy else sampled_from(VALID_MIMETYPES)),
-        extension=draw(
-            extension_strategy
-            if extension_strategy
-            else one_of(from_regex(r"^\..+$"), none())
-        ),
-        resources=draw(
-            resources_strategy
-            if resources_strategy
-            else lists(megu_http_resource(), min_size=1, max_size=2),
-        ),
-        meta=draw(meta_strategy if meta_strategy else megu_meta()),
-        checksums=draw(
-            checksum_strategy
-            if checksum_strategy
-            else lists(megu_checksum(), max_size=2)
-        ),
-        extra=draw(extra_strategy if extra_strategy else builds(dict)),
+        id=str(draw(id_strat or uuids(version=4))),
+        name=draw(name_strat or DEFAULT_NAME_STRAT),
+        url=draw(url_strat or url()),
+        quality=draw(quality_strat or floats(min_value=0, allow_nan=False)),
+        size=draw(size_strat or integers(min_value=1, max_value=1024)),
+        type=draw(type_strat or DEFAULT_MIMETYPES_STRAT),
+        extension=draw(extension_strat or one_of(from_regex(r"^\..+$"), none())),
+        resources=draw(resources_strat or lists(http_resource(), min_size=1, max_size=2)),
+        metadata=draw(metadata_strat or content_metadata()),
+        checksums=draw(checksums_strat or lists(content_checksum(), max_size=2)),
+        extra=draw(extra_strat or builds(dict)),
     )

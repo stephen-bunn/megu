@@ -51,7 +51,6 @@ mypy = "^0.991"
 pytest = "^7.2.0"
 pytest-cov = "^4.0.0"
 pytest-flake8 = "^1.1.1"
-pytest-sugar = "^0.9.6"
 rope = "^1.6.0"
 coverage = {extras = ["toml"], version = "^7.0.5"}
 towncrier = "^22.12.0"
@@ -59,6 +58,10 @@ myst-parser = "^0.18.1"
 toml = "^0.10.2"
 sphinx-hoverxref = "^1.3.0"
 furo = "^2022.12.7"
+hypothesis = "^6.63.0"
+tox = "^4.3.5"
+pytest-xdist = "^3.1.0"
+pytest-sugar = "^0.9.6"
 
 [tool.black]
 line-length = 100
@@ -83,7 +86,7 @@ src_paths = ["src", "test"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-rxsX --flake8 -n 4 --cov"
+addopts = "-rxsX --flake8 --cov -n auto"
 norecursedirs = [
   ".git",
   "dist",

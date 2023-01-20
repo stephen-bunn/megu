@@ -16,7 +16,7 @@ from httpx import URL, Request
 from megu.hash import HashType, hash_io
 
 
-class HttpResource(Request):
+class HTTPResource(Request):
     """Describes an HTTP resource to fetch for some content."""
 
     def __signature(self) -> bytes:
@@ -43,7 +43,7 @@ class HttpResource(Request):
 
 
 """Describes all handled content resources."""
-ContentResource: TypeAlias = HttpResource
+ContentResource: TypeAlias = HTTPResource
 
 
 @dataclass

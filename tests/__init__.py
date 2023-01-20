@@ -1,7 +1,3 @@
-# -*- encoding: utf-8 -*-
-# Copyright (c) 2021 Stephen Bunn <stephen@bunn.io>
-# GPLv3 License <https://choosealicense.com/licenses/gpl-3.0/>
-
 """This module contains project tests and is declared to allow for relative imports."""
 
 import os
@@ -9,11 +5,7 @@ import sys
 
 from hypothesis import HealthCheck, settings
 
-settings.register_profile(
-    "default",
-    suppress_health_check=[HealthCheck.too_slow],
-    max_examples=10,
-)
+settings.register_profile("default", max_examples=10)
 settings.register_profile(
     "ci",
     suppress_health_check=[HealthCheck.too_slow],

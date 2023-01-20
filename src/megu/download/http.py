@@ -12,7 +12,7 @@ from httpx import Client, Response
 from megu.config import STAGING_DIRPATH
 from megu.download.base import BaseDownloader
 from megu.helpers import allocate_storage
-from megu.models import Content, ContentManifest, HttpResource
+from megu.models import Content, ContentManifest, HTTPResource
 from megu.types import UpdateHook
 
 DEFAULT_CHUNK_SIZE = 4096
@@ -44,7 +44,7 @@ class HTTPDownloader(BaseDownloader):
             bool: True if the HTTP downloader can handle the provided content.
         """
 
-        return all(isinstance(resource, HttpResource) for resource in content.resources)
+        return all(isinstance(resource, HTTPResource) for resource in content.resources)
 
     @property
     def session(self) -> Client:
@@ -90,7 +90,7 @@ class HTTPDownloader(BaseDownloader):
             start = end + 1
             end = next_end
 
-    def _request_resource(self, resource: HttpResource, stream: bool = True) -> Response:
+    def _request_resource(self, resource: HTTPResource, stream: bool = True) -> Response:
         """Make a request for the given resource.
 
         Args:
@@ -105,7 +105,7 @@ class HTTPDownloader(BaseDownloader):
 
     def _download_normal(
         self,
-        resource: HttpResource,
+        resource: HTTPResource,
         response: Response,
         to_path: Path,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
@@ -145,7 +145,7 @@ class HTTPDownloader(BaseDownloader):
 
     def _download_partial(  # noqa: C901
         self,
-        resource: HttpResource,
+        resource: HTTPResource,
         response: Response,
         to_path: Path,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
@@ -251,12 +251,12 @@ class HTTPDownloader(BaseDownloader):
 
     def _download_resource(
         self,
-        resource: HttpResource,
+        resource: HTTPResource,
         resource_index: int,
         to_path: Path,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         update_hook: UpdateHook | None = None,
-    ) -> tuple[int, HttpResource, Path]:
+    ) -> tuple[int, HTTPResource, Path]:
         """Download the given HTTP resource to the provided filepath.
 
         Args:
@@ -334,8 +334,8 @@ class HTTPDownloader(BaseDownloader):
             ContentManifest: The content manifest containing downloaded artifacts.
         """
 
-        resource_results: list[tuple[int, HttpResource, Path]] = []
-        resource_futures: dict[Future[tuple[int, HttpResource, Path]], HttpResource] = {}
+        resource_results: list[tuple[int, HTTPResource, Path]] = []
+        resource_futures: dict[Future[tuple[int, HTTPResource, Path]], HTTPResource] = {}
 
         with ThreadPoolExecutor(max_workers=DEFAULT_MAX_CONNECTIONS) as thread_executor:
             for resource_index, resource in enumerate(content.resources):

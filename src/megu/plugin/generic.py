@@ -6,7 +6,7 @@ from typing import Generator
 
 from megu.hash import HashType, hash_io
 from megu.helpers import http_session
-from megu.models import URL, Content, ContentManifest, HttpResource
+from megu.models import URL, Content, ContentManifest, HTTPResource
 from megu.plugin.base import BasePlugin
 
 
@@ -76,7 +76,7 @@ class GenericPlugin(BasePlugin):
                 quality=1,
                 size=int(head.headers.get("Content-Length", 0)),
                 type=head.headers.get("Content-Type", "application/octet-stream"),
-                resources=[HttpResource(method="GET", url=url)],
+                resources=[HTTPResource(method="GET", url=url)],
             )
 
     def write_content(self, manifest: ContentManifest, to_path: Path) -> Path:

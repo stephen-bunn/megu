@@ -48,7 +48,9 @@ class HashType(Enum):
     def hasher(self) -> Hasher:
         """Get the hasher callable for the current hash type."""
 
-        if self.value not in AVAILABLE_HASHERS:
+        if self.value not in AVAILABLE_HASHERS:  # pragma: no cover
+            # Not gathering coverage on this thrown error as we should ensure that all enumeration
+            # values have matching hashers in `AVAILABLE_HASHERS` in code
             raise ValueError(f"No available hasher {self.value!r}")
 
         return AVAILABLE_HASHERS[self.value]
