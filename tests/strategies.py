@@ -2,6 +2,7 @@ import string
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
+from typing import TypeAlias, TypeVar
 
 from hypothesis.provisional import urls
 from hypothesis.strategies import (
@@ -14,7 +15,6 @@ from hypothesis.strategies import (
     floats,
     from_regex,
     integers,
-    just,
     lists,
     none,
     one_of,
@@ -57,6 +57,16 @@ DEFAULT_MIMETYPES_STRAT = sampled_from(
     ]
 )
 
+T = TypeVar("T")
+Strat: TypeAlias = T | SearchStrategy[T] | None
+
+
+def _draw(draw: DrawFn, strat: Strat[T], fallback: SearchStrategy[T]) -> T:
+    if not isinstance(strat, SearchStrategy):
+        return draw(fallback) if strat is None else strat
+
+    return draw(strat)
+
 
 @composite
 def path(draw: DrawFn) -> Path:
@@ -64,111 +74,114 @@ def path(draw: DrawFn) -> Path:
 
 
 @composite
-def hash_type(draw: DrawFn, type_strat: SearchStrategy[HashType] | None = None) -> HashType:
-    return draw(type_strat or sampled_from(HashType))
+def hash_type(draw: DrawFn, type_strat: Strat[HashType] = None) -> HashType:
+    return _draw(draw, type_strat, sampled_from(HashType))
 
 
 @composite
 def hash_value(
     draw: DrawFn,
-    type_strat: SearchStrategy[HashType] | None = None,
-    content_strat: SearchStrategy[bytes] | None = None,
+    type_strat: Strat[HashType] = None,
+    content_strat: Strat[bytes] = None,
 ) -> str:
-    _type = draw(hash_type(type_strat=type_strat))
-    content = BytesIO(draw(content_strat or binary(min_size=1)))
+    _type = draw(hash_type(type_strat))
+    content = BytesIO(_draw(draw, content_strat, binary(min_size=1)))
 
     return hash_io(content, {_type})[_type]
 
 
 @composite
-def url(draw: DrawFn, url_strat: SearchStrategy[str] | None = None) -> URL:
-    return URL(draw(url_strat or DEFAULT_URL_STRAT))
+def url(draw: DrawFn, url_strat: Strat[str] = None) -> URL:
+    return URL(_draw(draw, url_strat, DEFAULT_URL_STRAT))
 
 
 @composite
 def http_resource(
     draw: DrawFn,
-    method_strat: SearchStrategy[str] | None = None,
-    url_strat: SearchStrategy[URL] | None = None,
-    headers_strat: SearchStrategy[dict[str, str]] | None = None,
-    content_strat: SearchStrategy[bytes] | None = None,
+    method_strat: Strat[str] = None,
+    url_strat: Strat[URL] = None,
+    headers_strat: Strat[dict[str, str]] = None,
+    content_strat: Strat[bytes | None] = None,
 ) -> HTTPResource:
     return HTTPResource(
-        method=draw(
-            method_strat
-            or sampled_from(
+        method=_draw(
+            draw,
+            method_strat,
+            sampled_from(
                 ["GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH"]
-            )
+            ),
         ),
-        url=draw(url_strat or DEFAULT_URL_STRAT),
-        headers=draw(headers_strat or builds(dict)),
-        content=draw(content_strat or none()),
+        url=_draw(draw, url_strat, DEFAULT_URL_STRAT),
+        headers=_draw(draw, headers_strat, builds(dict)),
+        content=_draw(draw, content_strat, none()),
     )
 
 
 @composite
 def content_checksum(
     draw: DrawFn,
-    type_strat: SearchStrategy[HashType] | None = None,
-    content_strat: SearchStrategy[bytes] | None = None,
+    type_strat: Strat[HashType] = None,
+    content_strat: Strat[bytes] = None,
 ) -> ContentChecksum:
-    _type = draw(hash_type(type_strat=type_strat))
+    _type = draw(hash_type(type_strat))
     return ContentChecksum(
         type=_type.value,
-        value=draw(hash_value(type_strat=just(_type), content_strat=content_strat)),
+        value=draw(hash_value(type_strat=_type, content_strat=content_strat)),
     )
 
 
 @composite
 def content_metadata(
     draw: DrawFn,
-    id_strat: SearchStrategy[str] | None = None,
-    title_strat: SearchStrategy[str] | None = None,
-    description_strat: SearchStrategy[str] | None = None,
-    publisher_strat: SearchStrategy[str] | None = None,
-    published_at_strat: SearchStrategy[datetime] | None = None,
-    duration_strat: SearchStrategy[int] | None = None,
-    filename_strat: SearchStrategy[str] | None = None,
-    thumbnail_strat: SearchStrategy[URL] | None = None,
+    id_strat: Strat[str | None] = None,
+    title_strat: Strat[str | None] = None,
+    description_strat: Strat[str | None] = None,
+    publisher_strat: Strat[str | None] = None,
+    published_at_strat: Strat[datetime | None] = None,
+    duration_strat: Strat[int | None] = None,
+    filename_strat: Strat[str | None] = None,
+    thumbnail_strat: Strat[URL | None] = None,
 ) -> ContentMetadata:
     optional_string_strat = one_of(text(), none())
     return ContentMetadata(
-        id=draw(id_strat or optional_string_strat),
-        title=draw(title_strat or optional_string_strat),
-        description=draw(description_strat or optional_string_strat),
-        publisher=draw(publisher_strat or optional_string_strat),
-        published_at=draw(published_at_strat or one_of(datetimes(), none())),
-        duration=draw(duration_strat or one_of(integers(min_value=0), none())),
-        filename=draw(filename_strat or optional_string_strat),
-        thumbnail=draw(thumbnail_strat or one_of(DEFAULT_URL_STRAT, none())),
+        id=_draw(draw, id_strat, optional_string_strat),
+        title=_draw(draw, title_strat, optional_string_strat),
+        description=_draw(draw, description_strat, optional_string_strat),
+        publisher=_draw(draw, publisher_strat, optional_string_strat),
+        published_at=_draw(draw, published_at_strat, one_of(datetimes(), none())),
+        duration=_draw(draw, duration_strat, one_of(integers(min_value=0), none())),
+        filename=_draw(draw, filename_strat, optional_string_strat),
+        thumbnail=_draw(draw, thumbnail_strat, one_of(DEFAULT_URL_STRAT, none())),
     )
 
 
 @composite
 def content(
     draw: DrawFn,
-    id_strat: SearchStrategy[str] | None = None,
-    name_strat: SearchStrategy[str] | None = None,
-    url_strat: SearchStrategy[URL] | None = None,
-    quality_strat: SearchStrategy[float] | None = None,
-    size_strat: SearchStrategy[int] | None = None,
-    type_strat: SearchStrategy[str] | None = None,
-    extension_strat: SearchStrategy[str] | None = None,
-    resources_strat: SearchStrategy[list[HTTPResource]] | None = None,
-    metadata_strat: SearchStrategy[ContentMetadata] | None = None,
-    checksums_strat: SearchStrategy[list[ContentChecksum]] | None = None,
-    extra_strat: SearchStrategy[dict] | None = None,
+    id_strat: Strat[str] | None = None,
+    name_strat: Strat[str] | None = None,
+    url_strat: Strat[URL] | None = None,
+    quality_strat: Strat[float] | None = None,
+    size_strat: Strat[int] | None = None,
+    type_strat: Strat[str] | None = None,
+    extension_strat: Strat[str | None] = None,
+    resources_strat: Strat[list[HTTPResource]] = None,
+    metadata_strat: Strat[ContentMetadata | None] = None,
+    checksums_strat: Strat[list[ContentChecksum]] = None,
+    extra_strat: Strat[dict] = None,
 ) -> Content:
     return Content(
-        id=str(draw(id_strat or uuids(version=4))),
-        name=draw(name_strat or DEFAULT_NAME_STRAT),
-        url=draw(url_strat or url()),
-        quality=draw(quality_strat or floats(min_value=0, allow_nan=False)),
-        size=draw(size_strat or integers(min_value=1, max_value=1024)),
-        type=draw(type_strat or DEFAULT_MIMETYPES_STRAT),
-        extension=draw(extension_strat or one_of(from_regex(r"^\..+$"), none())),
-        resources=draw(resources_strat or lists(http_resource(), min_size=1, max_size=2)),
-        metadata=draw(metadata_strat or content_metadata()),
-        checksums=draw(checksums_strat or lists(content_checksum(), max_size=2)),
-        extra=draw(extra_strat or builds(dict)),
+        id=str(_draw(draw, id_strat, uuids(version=4))),
+        name=_draw(draw, name_strat, DEFAULT_NAME_STRAT),
+        url=_draw(draw, url_strat, url()),
+        quality=_draw(draw, quality_strat, floats(min_value=0, allow_nan=False)),
+        size=_draw(draw, size_strat, integers(min_value=1, max_value=1024)),
+        type=_draw(draw, type_strat, DEFAULT_MIMETYPES_STRAT),
+        extension=_draw(
+            draw, extension_strat, one_of(from_regex(r"^\.[a-zA-Z0-9]{1,10}$"), none())
+        ),
+        resources=_draw(draw, resources_strat, lists(http_resource(), min_size=1, max_size=2)),
+        metadata=_draw(draw, metadata_strat, content_metadata()),
+        checksums=_draw(draw, checksums_strat, lists(content_checksum(), max_size=2)),
+        extra=_draw(draw, extra_strat, builds(dict)),
     )
