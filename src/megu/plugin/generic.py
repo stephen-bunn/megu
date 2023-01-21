@@ -103,6 +103,6 @@ class GenericPlugin(BasePlugin):
 
         _, artifact_path = artifacts[0]
         if not artifact_path.is_file():
-            raise FileNotFoundError(f"No artifact file at {artifact_path} exists")
+            raise FileNotFoundError(f"No artifact file exists at {artifact_path}")
 
         return artifact_path.rename(to_path)

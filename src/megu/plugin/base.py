@@ -7,7 +7,7 @@ from typing import Generator
 from megu.models import URL, Content, ContentManifest
 
 
-class BasePlugin(ABC):
+class BasePlugin(ABC):  # pragma: no cover
     """The base plugin interface we rely on."""
 
     def __str__(self) -> str:

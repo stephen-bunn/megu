@@ -24,7 +24,14 @@ from hypothesis.strategies import (
 )
 
 from megu.hash import HashType, hash_io
-from megu.models import URL, Content, ContentChecksum, ContentMetadata, HTTPResource
+from megu.models import (
+    URL,
+    Content,
+    ContentChecksum,
+    ContentManifest,
+    ContentMetadata,
+    HTTPResource,
+)
 
 DEFAULT_URL_STRAT = urls().filter(lambda x: ":0" not in x)
 DEFAULT_NAME_STRAT = text(string.ascii_letters + string.digits, min_size=1, max_size=20)
@@ -184,4 +191,28 @@ def content(
         metadata=_draw(draw, metadata_strat, content_metadata()),
         checksums=_draw(draw, checksums_strat, lists(content_checksum(), max_size=2)),
         extra=_draw(draw, extra_strat, builds(dict)),
+    )
+
+
+@composite
+def content_manifest_artifact(
+    draw: DrawFn,
+    id_strat: Strat[str] | None = None,
+    path_strat: Strat[Path] | None = None,
+) -> tuple[str, Path]:
+    return (
+        _draw(draw, id_strat, DEFAULT_NAME_STRAT),
+        _draw(draw, path_strat, path()),
+    )
+
+
+@composite
+def content_manifest(
+    draw: DrawFn,
+    id_strat: Strat[str] | None = None,
+    artifacts_strat: Strat[list[tuple[str, Path]]] | None = None,
+) -> ContentManifest:
+    return (
+        _draw(draw, id_strat, DEFAULT_NAME_STRAT),
+        _draw(draw, artifacts_strat, lists(content_manifest_artifact(), min_size=1, max_size=4)),
     )

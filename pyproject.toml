@@ -62,6 +62,7 @@ hypothesis = "^6.63.0"
 tox = "^4.3.5"
 pytest-xdist = "^3.1.0"
 pytest-sugar = "^0.9.6"
+respx = "^0.20.1"
 
 [tool.black]
 line-length = 100
@@ -86,7 +87,12 @@ src_paths = ["src", "test"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-rxsX --flake8 --cov -n auto"
+addopts = [
+  "-rxsX",
+  "--flake8",
+  "--cov",
+  "--numprocesses=auto",
+]
 norecursedirs = [
   ".git",
   "dist",

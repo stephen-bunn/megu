@@ -49,7 +49,8 @@ def get_plugin(url: URL, plugin_dirpath: Path | None = None) -> BasePlugin:
     """
 
     for _, plugins in iter_plugins(plugin_dirpath=plugin_dirpath):
-        for plugin in plugins:
+        for plugin_class in plugins:
+            plugin = plugin_class()
             if url.netloc.decode("utf-8") not in plugin.domains:
                 continue
 

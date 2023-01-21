@@ -105,7 +105,8 @@ def plugin_list(ctx: Context):
     plugin_tree = Tree(f"[debug]{plugin_dir}[/]")
     for plugin_module, plugins in iter_plugins(plugin_dir):
         module_tree = plugin_tree.add(f"[info]{plugin_module}[/]")
-        for plugin in plugins:
+        for plugin_class in plugins:
+            plugin = plugin_class()
             module_tree.add(Columns([f"[success]{plugin.name}[/]", f"[debug]{plugin.domains}[/]"]))
 
     console.print(plugin_tree)
