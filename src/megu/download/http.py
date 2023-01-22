@@ -206,7 +206,7 @@ class HTTPDownloader(BaseDownloader):
             if content_range_size is not None and content_range_size not in ("", "*")
             else None
         )
-        if resource_size is not None:
+        if resource_size is not None:  # pragma: no cover
             allocate_storage(to_path, resource_size)
 
         with to_path.open("wb") as file_io:
@@ -231,9 +231,14 @@ class HTTPDownloader(BaseDownloader):
             raise ValueError(f"Iteration of ranges from {content_range_groups} failed")
 
         for start, end in range_iterator:
-            next_resource = copy(resource)
-            next_resource.headers.update(
-                {"Range": f"{content_range_groups.get('unit')}={start}-{end}"}
+            next_resource = HTTPResource(
+                resource.method,
+                resource.url,
+                headers={
+                    **resource.headers,
+                    **{"Range": f"{content_range_groups.get('unit')}={start}-{end}"},
+                },
+                content=resource.content,
             )
             next_response = self._request_resource(next_resource)
             if not next_response.is_success:
