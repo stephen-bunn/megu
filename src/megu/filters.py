@@ -1,9 +1,11 @@
 """This module provides basic content filters to wrap :func:`megu.iter_content` or alternatives."""
 
-from functools import reduce
+import warnings
+from functools import partial, reduce
 from itertools import groupby
-from typing import Generator
+from typing import Any, Generator
 
+from megu.errors import MeguWarning
 from megu.models import Content
 
 
@@ -37,13 +39,25 @@ def specific_content(
         Content: Only the content matching the provided conditions.
     """
 
+    def _filter_content(
+        attribute: str,
+        value: Any,
+        iterator: Generator[Content, None, None],
+    ) -> Generator[Content, None, None]:
+        yield from filter(lambda content: getattr(content, attribute, None) == value, iterator)
+
     allowed_attributes = {"quality", "type"}
 
     filters = []
     for content_attribute, value in conditions.items():
         if content_attribute not in allowed_attributes:
+            warnings.warn(
+                f"Skipping unhandled content filtering with attribute {content_attribute}, "
+                f"allowed attributes are {allowed_attributes}",
+                MeguWarning,
+            )
             continue
 
-        filters.append(lambda content: getattr(content, content_attribute, None) != value)
+        filters.append(partial(_filter_content, content_attribute, value))
 
     yield from reduce(lambda f1, f2: lambda x: f2(f1(x)), filters, lambda x: x)(content_iterator)

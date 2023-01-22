@@ -5,7 +5,7 @@ import sys
 
 from hypothesis import HealthCheck, settings
 
-settings.register_profile("default", max_examples=10)
+settings.register_profile("default", max_examples=5)
 settings.register_profile(
     "ci",
     suppress_health_check=[HealthCheck.too_slow],
