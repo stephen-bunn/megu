@@ -121,25 +121,27 @@ def list(ctx: Context, from_url: str = Argument(..., metavar="URL")):
 
     console = get_console(get_context_param(ctx, "color", True))
     url = normalize_url(from_url)
-    url_tree = Tree(f"[debug]{url}[/]")
-
     plugin = get_plugin(url, plugin_dirpath=get_context_param(ctx, "plugin_dir", PLUGIN_DIRPATH))
 
     try:
-        for content_id, content in groupby(iter_content(plugin, url), lambda content: content.id):
-            content_tree = url_tree.add(f"[info]{content_id}[/]")
-            for content_item in sorted(content, key=lambda content: content.quality, reverse=True):
-                content_tree.add(
-                    Columns(
-                        [
-                            f"[success]{content_item.name}[/]",
-                            f"[debug]({content_item.type})[/]",
-                            f"[info]{format_filesize(content_item.size)}[/]",
-                        ]
+        with console.status(f"[debug]Listing {url}...[/]"):
+            for content_id, content in groupby(
+                iter_content(plugin, url), lambda content: content.id
+            ):
+                content_tree = Tree(f"[info]{content_id}[/]")
+                for content_item in sorted(
+                    content, key=lambda content: content.quality, reverse=True
+                ):
+                    content_tree.add(
+                        Columns(
+                            [
+                                f"[success]{content_item.name}[/]",
+                                f"[debug]({content_item.type})[/]",
+                                f"[info]{format_filesize(content_item.size)}[/]",
+                            ]
+                        )
                     )
-                )
-
-        console.print(url_tree)
+                console.print(content_tree)
     except Exception:
         console.print_exception()
         raise

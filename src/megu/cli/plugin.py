@@ -46,7 +46,7 @@ def plugin_install(ctx: Context, plugin: str):
     """Install a plugin via pip."""
 
     console = get_console(get_context_param(ctx, "color", True))
-    with console.status(f"Install Plugin [info]{plugin}[/info]"), temporary_directory(
+    with console.status(f"[debug]Install Plugin [info]{plugin}[/]"), temporary_directory(
         "plugin-install-"
     ) as temp_dirpath:
         subprocess.check_call(
@@ -81,19 +81,23 @@ def plugin_install(ctx: Context, plugin: str):
 
         copytree(temp_dirpath, package_dirpath)
 
+    console.print(f"[success]Installed [info]{package_name}[/]")
+
 
 @plugin_app.command("uninstall")
 def plugin_uninstall(ctx: Context, plugin: str):
     """Uninstall a plugin."""
 
     console = get_console(get_context_param(ctx, "color", True))
-    with console.status(f"Uninstall Plugin [info]{plugin}[/]"):
+    with console.status(f"[debug]Uninstall Plugin [info]{plugin}[/]"):
         package_dirpath = get_context_param(ctx, "plugin_dir", PLUGIN_DIRPATH).joinpath(plugin)
         if not package_dirpath.is_dir():
             console.print(f"No plugin {plugin} exists", style="error")
             return
 
         rmtree(package_dirpath)
+
+    console.print(f"[success]Uninstalled [info]{plugin}[/]")
 
 
 @plugin_app.command("list")
