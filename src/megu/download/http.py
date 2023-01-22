@@ -62,7 +62,7 @@ class HTTPDownloader(BaseDownloader):
         self,
         start: int,
         end: int,
-        size: int | None = None,
+        total_size: int | None = None,
         chunk_size: int | None = None,
     ) -> Generator[tuple[int, int], None, None]:
         """Iterate over byte ranges for a given start, end, total size, and chunk size.
@@ -70,22 +70,25 @@ class HTTPDownloader(BaseDownloader):
         Args:
             start (int): The starting bytes.
             end (int): The ending bytes.
-            size (int | None, optional): The total bytes. Defaults to None.
+            total_size (int | None, optional): The total bytes. Defaults to None.
             chunk_size (int | None, optional): The byte chunk size. Defaults to None.
 
         Yields:
             tuple[int, int]: A tuple containing the following starting and ending bytes
         """
 
-        while end <= size if size is not None else True:
+        if total_size is not None and end >= total_size:
+            return
+
+        while end <= total_size if total_size is not None else True:
             if start > end:
                 break
 
             yield start, end
 
-            next_end = end + (chunk_size if chunk_size is not None else ((end - start) + 1))
-            if size is not None and next_end > size:
-                next_end = size
+            next_end = end + (chunk_size if chunk_size is not None else (end - start) + 1)
+            if total_size is not None and next_end > total_size:
+                next_end = total_size
 
             start = end + 1
             end = next_end
@@ -130,7 +133,9 @@ class HTTPDownloader(BaseDownloader):
         """
 
         resource_size = None
-        if "Content-Length" in response.headers:
+        # TODO: allocation of storage space _may_ not be necessary
+        # does the allocate_storage call even help at all?
+        if "Content-Length" in response.headers:  # pragma: no cover
             resource_size = int(response.headers["Content-Length"])
             allocate_storage(to_path, resource_size)
 
@@ -214,7 +219,7 @@ class HTTPDownloader(BaseDownloader):
         range_iterator = self._iter_ranges(
             int(content_range_groups["start"]),
             int(content_range_groups["end"]),
-            size=resource_size,
+            resource_size,
         )
 
         try:
@@ -294,7 +299,7 @@ class HTTPDownloader(BaseDownloader):
         elif response.status_code in status_handlers:
             download_handler = status_handlers.get(response.status_code, self._download_normal)
 
-            if to_path.is_file():
+            if to_path.is_file():  # pragma: no cover
                 # Removing existing artifact paths, this typically happens when downloads are
                 # ungracefully terminated or cancelled through intervention by the user
                 to_path.unlink()

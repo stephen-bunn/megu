@@ -7,7 +7,7 @@ from megu.models import Content, ContentManifest
 from megu.types import UpdateHook
 
 
-class BaseDownloader(ABC):
+class BaseDownloader(ABC):  # pragma: no cover
     """The base downloader interface we rely on."""
 
     @abstractproperty

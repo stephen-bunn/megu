@@ -43,7 +43,7 @@ def specific_content(
         attribute: str,
         value: Any,
         iterator: Generator[Content, None, None],
-    ) -> Generator[Content, None, None]:
+    ) -> Generator[Content, None, None]:  # pragma: no cover
         yield from filter(lambda content: getattr(content, attribute, None) == value, iterator)
 
     allowed_attributes = {"quality", "type"}

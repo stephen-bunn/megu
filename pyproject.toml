@@ -91,6 +91,8 @@ addopts = [
   "-rxsX",
   "--flake8",
   "--cov",
+  "--cov-report=term:skip-covered",
+  "--cov-report=xml",
   "--numprocesses=auto",
 ]
 norecursedirs = [
