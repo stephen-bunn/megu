@@ -78,7 +78,7 @@ thumbnail_content = Content(..., group="post-1234")
 
 #### Content Name
 
-A human readable name describine the remote content variant.
+A human readable name describing the remote content variant.
 This attribute has no requirements on being unique, its only purpose is to provide a decent name for the content than humans can understand.
 
 ```python
