@@ -3,6 +3,7 @@
 This top-level module contains helper functions that are primarily useful for clients using Megu.
 """
 
+from fnmatch import fnmatch
 from pathlib import Path
 from shutil import copy2
 from typing import Generator
@@ -51,7 +52,7 @@ def get_plugin(url: URL, plugin_dirpath: Path | None = None) -> BasePlugin:
     for _, plugins in iter_plugins(plugin_dirpath=plugin_dirpath):
         for plugin_class in plugins:
             plugin = plugin_class()
-            if url.netloc.decode("utf-8") not in plugin.domains:
+            if not any(fnmatch(url.host, domain) for domain in plugin.domains):
                 continue
 
             if not plugin.can_handle(url):
@@ -100,7 +101,7 @@ def write_content(plugin: BasePlugin, manifest: ContentManifest, to_path: Path) 
     """
 
     if to_path.exists():
-        raise FileExistsError(f"File at {to_path} already exists")
+        raise FileExistsError(f"File already exists at {to_path}")
 
     content_id, _ = manifest
     with temporary_file(content_id, "wb") as (temp_filepath, _):
@@ -174,7 +175,7 @@ def download(
     url = normalize_url(url)
     plugin = get_plugin(url, plugin_dirpath=plugin_dirpath)
     sieve = content_filter if content_filter is not None else best_content
-    for content in sieve(plugin.iter_content(url)):
+    for content in sieve(iter_content(plugin, url)):
         to_path = to_dir.joinpath(content.filename)
         if to_path.is_file() and not exists_ok and not overwrite:
             raise FileExistsError(f"File exists at {to_path}")

@@ -114,6 +114,7 @@ branch = true
 parallel = true
 disable_warnings = ["no-data-collected"]
 source = ["src/megu/"]
+omit = ["src/megu/cli/*"]
 
 [tool.coverage.report]
 show_missing = true
