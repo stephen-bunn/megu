@@ -125,10 +125,10 @@ def list(ctx: Context, from_url: str = Argument(..., metavar="URL")):
 
     try:
         with console.status(f"[debug]Listing {url}...[/]"):
-            for content_id, content in groupby(
-                iter_content(plugin, url), lambda content: content.id
+            for content_group, content in groupby(
+                iter_content(plugin, url), lambda content: content.group
             ):
-                content_tree = Tree(f"[info]{content_id}[/]")
+                content_tree = Tree(f"[info]{content_group}[/]")
                 for content_item in sorted(
                     content, key=lambda content: content.quality, reverse=True
                 ):
