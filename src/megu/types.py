@@ -7,4 +7,4 @@ from typing import Any, Callable
 This is a callable that takes an incremented value to a total.
 The total amount should be passed in as the second value, but it is optional.
 """
-UpdateHook = Callable[[int, int | None], Any]
+UpdateHook = Callable[[str, int, int | None], Any]

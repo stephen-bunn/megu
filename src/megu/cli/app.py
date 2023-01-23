@@ -104,7 +104,9 @@ def get(
                 download_task = progress.add_task("Downloading", total=content.size)
                 manifest = downloader.download_content(
                     content,
-                    update_hook=lambda chunk_size, _: progress.advance(download_task, chunk_size),
+                    update_hook=lambda content_id, chunk_size, total_size: progress.advance(
+                        download_task, chunk_size
+                    ),
                 )
 
                 progress.stop()

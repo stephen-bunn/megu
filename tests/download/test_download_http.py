@@ -56,7 +56,9 @@ def test_HTTPDownloader_download_normal(respx_mock, megu_url: URL):
     with TemporaryDirectory() as temp_dir:
         temp_filepath = Path(temp_dir).joinpath("test")
         assert (
-            HTTPDownloader()._download_normal(HTTPResource("GET", megu_url), resp, temp_filepath)
+            HTTPDownloader()._download_normal(
+                "test", HTTPResource("GET", megu_url), resp, temp_filepath
+            )
             == temp_filepath
         )
 
@@ -72,6 +74,7 @@ def test_HTTPDownloader_download_normal_calls_update_hook(respx_mock, megu_url: 
 
     with TemporaryDirectory() as temp_dir:
         HTTPDownloader()._download_normal(
+            "test",
             HTTPResource("GET", megu_url),
             resp,
             Path(temp_dir).joinpath("test"),
@@ -79,7 +82,7 @@ def test_HTTPDownloader_download_normal_calls_update_hook(respx_mock, megu_url: 
             update_hook_mock,
         )
 
-    update_hook_mock.assert_has_calls([call(1, 4) for _ in range(4)])
+    update_hook_mock.assert_has_calls([call("test", 1, 4) for _ in range(4)])
 
 
 def test_HTTPDownloader_download_partial(respx_mock, megu_url: URL):
@@ -89,7 +92,7 @@ def test_HTTPDownloader_download_partial(respx_mock, megu_url: URL):
     with TemporaryDirectory() as temp_dir:
         to_path = Path(temp_dir).joinpath("test")
         assert (
-            HTTPDownloader()._download_partial(HTTPResource("GET", megu_url), resp, to_path)
+            HTTPDownloader()._download_partial("test", HTTPResource("GET", megu_url), resp, to_path)
             == to_path
         )
 
@@ -109,10 +112,10 @@ def test_HTTPDownloader_download_partial_fallback_for_missing_content_range(
     ) as mocked_download_normal:
         resource = HTTPResource("GET", megu_url)
         to_path = Path(temp_dir).joinpath("test")
-        downloader._download_partial(resource, resp, to_path)
+        downloader._download_partial("test", resource, resp, to_path)
 
         mocked_download_normal.assert_has_calls(
-            [call(resource, resp, to_path, chunk_size=DEFAULT_CHUNK_SIZE, update_hook=None)]
+            [call("test", resource, resp, to_path, chunk_size=DEFAULT_CHUNK_SIZE, update_hook=None)]
         )
 
 
@@ -128,10 +131,10 @@ def test_HTTPDownloader_download_partial_fallback_for_invalid_content_range(
     ) as mocked_download_normal:
         resource = HTTPResource("GET", megu_url)
         to_path = Path(temp_dir).joinpath("test")
-        downloader._download_partial(resource, resp, to_path)
+        downloader._download_partial("test", resource, resp, to_path)
 
         mocked_download_normal.assert_has_calls(
-            [call(resource, resp, to_path, chunk_size=DEFAULT_CHUNK_SIZE, update_hook=None)]
+            [call("test", resource, resp, to_path, chunk_size=DEFAULT_CHUNK_SIZE, update_hook=None)]
         )
 
 
@@ -143,6 +146,7 @@ def test_HTTPDownloader_download_partial_raises_ValueError_for_failing_range_ite
 
     with TemporaryDirectory() as temp_dir, pytest.raises(ValueError) as error:
         HTTPDownloader()._download_partial(
+            "test",
             HTTPResource("GET", megu_url),
             resp,
             Path(temp_dir).joinpath("test"),
@@ -158,13 +162,14 @@ def test_HTTPDownloader_download_partial_calls_update_hook(respx_mock, megu_url:
 
     with TemporaryDirectory() as temp_dir:
         HTTPDownloader()._download_partial(
+            "test",
             HTTPResource("GET", megu_url),
             resp,
             Path(temp_dir).joinpath("test"),
             update_hook=update_hook_mock,
         )
 
-    update_hook_mock.assert_has_calls([call(4, 4)])
+    update_hook_mock.assert_has_calls([call("test", 4, 4)])
 
 
 def test_HTTPDownloader_download_resource_for_status_200(respx_mock, megu_url: URL):
@@ -181,10 +186,11 @@ def test_HTTPDownloader_download_resource_for_status_200(respx_mock, megu_url: U
         mocked_request_resource.return_value = resp
         temp_filepath = Path(temp_dir).joinpath("test")
 
-        downloader._download_resource(resource, 1, temp_filepath)
+        downloader._download_resource("test", resource, 1, temp_filepath)
         mocked_download_normal.assert_has_calls(
             [
                 call(
+                    "test",
                     resource,
                     resp,
                     temp_filepath,
@@ -209,10 +215,11 @@ def test_HTTPDownloader_download_resource_for_status_206(respx_mock, megu_url: U
         mocked_request_resource.return_value = resp
         temp_filepath = Path(temp_dir).joinpath("test")
 
-        downloader._download_resource(resource, 1, temp_filepath)
+        downloader._download_resource("test", resource, 1, temp_filepath)
         mocked_download_partial.assert_has_calls(
             [
                 call(
+                    "test",
                     resource,
                     resp,
                     temp_filepath,
@@ -229,7 +236,7 @@ def test_HTTPDownloader_download_resource_raises_ValueError_for_invalid_resource
     respx_mock.get(str(megu_url)).mock(return_value=Response(404))
     with pytest.raises(ValueError) as error:
         resource = HTTPResource("GET", megu_url)
-        HTTPDownloader()._download_resource(resource, 1, Path())
+        HTTPDownloader()._download_resource("test", resource, 1, Path())
         assert f"Response for resource {resource} resolved to error 404" in str(error)
 
 
@@ -239,7 +246,7 @@ def test_HTTPDownloader_download_resource_raises_ValueError_for_empty_resource(
     respx_mock.get(str(megu_url)).mock(return_value=Response(204))
     with pytest.raises(ValueError) as error:
         resource = HTTPResource("GET", megu_url)
-        HTTPDownloader()._download_resource(resource, 1, Path())
+        HTTPDownloader()._download_resource("test", resource, 1, Path())
         assert f"Response for resource {resource} has no content" in str(error)
 
 
@@ -249,7 +256,7 @@ def test_HTTPDownloader_download_resource_raises_ValueError_for_unhandled_status
     respx_mock.get(str(megu_url)).mock(return_value=Response(201))
     with pytest.raises(ValueError) as error:
         resource = HTTPResource("GET", megu_url)
-        HTTPDownloader()._download_resource(resource, 1, Path())
+        HTTPDownloader()._download_resource("test", resource, 1, Path())
         assert f"Response for resource {resource} resolved to unhandled status 201" in str(error)
 
 

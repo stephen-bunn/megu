@@ -108,6 +108,7 @@ class HTTPDownloader(BaseDownloader):
 
     def _download_normal(
         self,
+        content_id: str,
         resource: HTTPResource,
         response: Response,
         to_path: Path,
@@ -117,6 +118,8 @@ class HTTPDownloader(BaseDownloader):
         """Download the HTTP resource assuming it is not a partial resource.
 
         Args:
+            content_id (str):
+                The unique content id of the content being downloaded.
             resource (HttpResource):
                 The resource to download.
             response (Response):
@@ -144,12 +147,13 @@ class HTTPDownloader(BaseDownloader):
                 file_io.write(chunk)
 
                 if update_hook is not None:
-                    update_hook(len(chunk), resource_size)
+                    update_hook(content_id, len(chunk), resource_size)
 
         return to_path
 
     def _download_partial(  # noqa: C901
         self,
+        content_id: str,
         resource: HTTPResource,
         response: Response,
         to_path: Path,
@@ -159,6 +163,8 @@ class HTTPDownloader(BaseDownloader):
         """Download the HTTP resource assuming it is a partial resource.
 
         Args:
+            content_id (str):
+                The unique content id of the content being downloaded.
             resource (HttpResource):
                 The partial resource to download.
             response (Response):
@@ -182,6 +188,7 @@ class HTTPDownloader(BaseDownloader):
         # HTTP 206 RFC, we can attempt to fallback to the standard HTTP 200 downloader callable
         fallback_handler = partial(
             self._download_normal,
+            content_id,
             resource,
             response,
             to_path,
@@ -214,7 +221,7 @@ class HTTPDownloader(BaseDownloader):
                 file_io.write(chunk)
 
                 if update_hook is not None:
-                    update_hook(len(chunk), resource_size)
+                    update_hook(content_id, len(chunk), resource_size)
 
         range_iterator = self._iter_ranges(
             int(content_range_groups["start"]),
@@ -255,12 +262,13 @@ class HTTPDownloader(BaseDownloader):
                     file_io.write(chunk)
 
                     if update_hook is not None:
-                        update_hook(len(chunk), resource_size)
+                        update_hook(content_id, len(chunk), resource_size)
 
         return to_path
 
     def _download_resource(
         self,
+        content_id: str,
         resource: HTTPResource,
         resource_index: int,
         to_path: Path,
@@ -270,6 +278,8 @@ class HTTPDownloader(BaseDownloader):
         """Download the given HTTP resource to the provided filepath.
 
         Args:
+            content_id (str):
+                The unique identifier of the content being downloaded.
             resource (HttpResource):
                 The resource to download.
             resource_index (int):
@@ -310,6 +320,7 @@ class HTTPDownloader(BaseDownloader):
                 to_path.unlink()
 
             artifact_path = download_handler(
+                content_id,
                 resource,
                 response,
                 to_path,
@@ -355,6 +366,7 @@ class HTTPDownloader(BaseDownloader):
                 resource_futures[
                     thread_executor.submit(
                         self._download_resource,
+                        content.id,
                         resource,
                         resource_index,
                         to_path,
