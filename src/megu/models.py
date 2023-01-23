@@ -100,7 +100,9 @@ class Content:
 
     Args:
         id (str):
-            The identifier of the content.
+            The unique identifier of the content.
+        group (str):
+            The identifier for the content group.
         name (str):
             The name of the variant of the content.
         quality (float):
@@ -125,6 +127,7 @@ class Content:
 
     id: str = field()
     name: str = field()
+    group: str = field()
     quality: float = field()
     size: int = field()
     type: str = field()
@@ -161,6 +164,8 @@ class Content:
 
 """Type describing a manifest of downloaded content artifacts to pass along to the plugin for
 writing out to a single filepath.
+
+>>> ("content-id", [("resource-fingerprint", artifact_filepath)])
 """
 ContentManifest = tuple[str, list[tuple[str, Path]]]
 

@@ -166,6 +166,7 @@ def content_metadata(
 def content(
     draw: DrawFn,
     id_strat: Strat[str] | None = None,
+    group_strat: Strat[str] | None = None,
     name_strat: Strat[str] | None = None,
     url_strat: Strat[URL] | None = None,
     quality_strat: Strat[float] | None = None,
@@ -179,6 +180,7 @@ def content(
 ) -> Content:
     return Content(
         id=str(_draw(draw, id_strat, uuids(version=4))),
+        group=str(_draw(draw, group_strat, uuids(version=4))),
         name=_draw(draw, name_strat, DEFAULT_NAME_STRAT),
         url=_draw(draw, url_strat, url()),
         quality=_draw(draw, quality_strat, floats(min_value=0, allow_nan=False)),

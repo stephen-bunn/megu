@@ -60,8 +60,11 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
-    "hoverxref.extension",
 ]
+
+# Myst settings
+myst_heading_anchors = 4
+myst_enable_extensions = ["colon_fence"]
 
 # Autodoc settings
 autodoc_mock_imports = []
@@ -82,21 +85,6 @@ napoleon_type_aliases = None
 
 # Todo settings
 todo_include_todos = True
-
-# Hoverxref settings
-hoverxref_role_types = {
-    "hoverxref": "modal",
-    "ref": "modal",
-    "confval": "tooltip",
-    "mod": "tooltip",
-    "class": "tooltip",
-}
-hoverxref_default_type = "tooltip"
-hoverxref_auto_ref = True
-hoverxref_ignore_refs = ["genindex", "modindex", "search"]
-hoverxref_domains = ["py"]
-hoverxref_roles = []
-hoverxref_sphinxtabs = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -123,7 +111,8 @@ language = "en"
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = None
+pygments_style = "dracula"
+pygments_dark_style = "dracula"
 
 # Handle global project external link references
 rst_epilog = ""
@@ -133,6 +122,7 @@ rst_epilog = ""
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
+html_title = f"{project} {version}"
 html_theme = "furo"
 html_logo = "_static/assets/images/megu-icon.svg"
 html_favicon = "_static/favicon.png"
@@ -142,15 +132,18 @@ html_favicon = "_static/favicon.png"
 # documentation.
 #
 html_theme_options = {
+    "light_css_variables": {
+        "color-brand-primary": "#774433",
+        "font-stack--monospace": "Fira Code, monospace",
+    },
     "dark_css_variables": {"color-brand-primary": "#D68949"},
-    "light_css_variables": {"color-brand-primary": "#774433"},
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-html_css_files = ["css/tweaks.css"]
+html_css_files = ["css/fonts.css", "css/tweaks.css"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

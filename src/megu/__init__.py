@@ -3,6 +3,7 @@
 This top-level module contains helper functions that are primarily useful for clients using Megu.
 """
 
+import warnings
 from fnmatch import fnmatch
 from pathlib import Path
 from shutil import copy2
@@ -10,12 +11,14 @@ from typing import Generator
 
 from megu.download import iter_downloaders
 from megu.download.base import BaseDownloader
+from megu.errors import MeguWarning
 from megu.filters import best_content
 from megu.helpers import temporary_file
 from megu.models import URL, Content, ContentFilter, ContentManifest
 from megu.plugin import iter_plugins, register_plugin
 from megu.plugin.base import BasePlugin
 from megu.plugin.generic import GenericPlugin
+from megu.types import UpdateHook
 
 
 def normalize_url(url: str | URL) -> URL:
@@ -134,13 +137,53 @@ def get_downloader(content: Content) -> BaseDownloader:
     raise ValueError(f"Failed to find a downloader that can handle content {content}")
 
 
-def download(
+def download_content(
+    downloader: BaseDownloader,
+    content: Content,
+    staging_dirpath: Path | None = None,
+    update_hook: UpdateHook | None = None,
+) -> ContentManifest:
+    """Download the provided content using the provided downloader instance.
+
+    >>> download_content(HTTPDownloader(), Content(...))
+    ("content-id", [("resource-fingerprint", Path(...))])
+
+    Args:
+        downloader (BaseDownloader):
+            The downloader to use to fetch the given content.
+        content (Content):
+            The content to download using the given downloader.
+        staging_dirpath (Path | None, optional):
+            The staging directory to use for downloaded content artifacts. Defaults to None.
+        update_hook (UpdateHook | None, optional):
+            The update hook to use for reporting download progress. Defaults to None.
+
+    Raises:
+        NotADirectoryError: If the provided staging directory does not exist.
+
+    Returns:
+        ContentManifest: The manifest for downloaded content artifacts.
+    """
+
+    if staging_dirpath is not None and not staging_dirpath.is_dir():
+        raise NotADirectoryError(f"Staging directory {staging_dirpath} does not exist")
+
+    return downloader.download_content(
+        content,
+        staging_dirpath=staging_dirpath,
+        update_hook=update_hook,
+    )
+
+
+def fetch(
     url: str | URL,
     to_dir: Path,
     overwrite: bool = True,
     exists_ok: bool = True,
     content_filter: ContentFilter | None = None,
     plugin_dirpath: Path | None = None,
+    staging_dirpath: Path | None = None,
+    update_hook: UpdateHook | None = None,
 ) -> Generator[Path, None, None]:
     """Shortcut to try and download best content from the given URL using the best plugin.
 
@@ -183,9 +226,22 @@ def download(
         try:
             downloader = get_downloader(content)
         except Exception:
+            warnings.warn(
+                f"Failed to discover downloader to download content {content}",
+                MeguWarning,
+            )
             continue
 
-        yield plugin.write_content(downloader.download_content(content), to_path)
+        yield write_content(
+            plugin,
+            download_content(
+                downloader,
+                content,
+                staging_dirpath=staging_dirpath,
+                update_hook=update_hook,
+            ),
+            to_path,
+        )
 
 
 # Only exposing the helper functions from the top-level module for unspecific imports
@@ -196,5 +252,6 @@ __all__ = [
     "iter_content",
     "write_content",
     "get_downloader",
-    "download",
+    "download_content",
+    "fetch",
 ]

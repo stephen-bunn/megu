@@ -22,7 +22,7 @@ def best_content(
         Content: Only the best quality content grouped by the content id.
     """
 
-    for _, grouped_content_iterator in groupby(content_iterator, key=lambda c: c.id):
+    for _, grouped_content_iterator in groupby(content_iterator, key=lambda c: c.group):
         yield max(grouped_content_iterator, key=lambda c: c.quality)
 
 

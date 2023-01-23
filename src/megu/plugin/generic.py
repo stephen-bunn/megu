@@ -69,8 +69,10 @@ class GenericPlugin(BasePlugin):
             if not head.is_success:
                 return
 
+            content_id = GenericPlugin.__build_content_id(url)
             yield Content(
-                id=GenericPlugin.__build_content_id(url),
+                id=content_id,
+                group=content_id,
                 name="Generic Content",
                 url=url,
                 quality=1,

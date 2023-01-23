@@ -7,7 +7,7 @@ from httpx import Response
 from hypothesis import assume, given
 from hypothesis.strategies import lists, one_of
 
-from megu import download, get_downloader, get_plugin, iter_content, normalize_url, write_content
+from megu import fetch, get_downloader, get_plugin, iter_content, normalize_url, write_content
 from megu.download.http import HTTPDownloader
 from megu.models import URL, Content, ContentManifest
 from megu.plugin.generic import GenericPlugin
@@ -117,7 +117,7 @@ def test_get_downloader_raises_ValueError_for_unhandled_downloads(content: Conte
         assert f"Failed to find a downloader that can handle content {content}" in str(error)
 
 
-def test_download(respx_mock, megu_url: URL):
+def test_fetch(respx_mock, megu_url: URL):
     respx_mock.head(str(megu_url)).mock(
         return_value=Response(200, headers={"Content-Length": "4", "Content-Type": "text/plain"})
     )
@@ -125,15 +125,15 @@ def test_download(respx_mock, megu_url: URL):
 
     with TemporaryDirectory() as temp_dir:
         temp_dirpath = Path(temp_dir)
-        to_path = next(download(megu_url, temp_dirpath))
+        to_path = next(fetch(megu_url, temp_dirpath))
         assert to_path == temp_dirpath.joinpath("generic-3c76cc1eef59aaa8725f79f7e845395c.txt")
         with to_path.open("rb") as file_io:
             assert file_io.read() == b"test"
 
 
 @given(url(), path())
-def test_download_raises_NotADirectoryError_for_missing_directory(url: URL, path: Path):
+def test_fetch_raises_NotADirectoryError_for_missing_directory(url: URL, path: Path):
     assume(path.exists() == False)
     with pytest.raises(NotADirectoryError) as error:
-        next(download(url, path))
+        next(fetch(url, path))
         assert f"No directory exists at {path}" in str(error)

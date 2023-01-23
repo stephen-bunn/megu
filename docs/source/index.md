@@ -14,11 +14,19 @@ Using this plugin-based approach removes the technical overhead necessary for th
 This framework is **only** concerned with calling plugins, using the described content produced by plugins, validating it, and reproducing it to the local filesystem.
 Discovering and extracting content descriptors for concrete media-hosting sites is the concern of plugins.
 
+## Getting Started
+
 ```{toctree}
+---
+maxdepth: 2
+---
+
 installation
 usage
 plugins
 ```
+
+## Library Reference
 
 ```{toctree}
 ---

@@ -260,6 +260,7 @@ def test_HTTPDownloader_download_content(respx_mock, megu_url: URL):
         staging_dir = Path(temp_dir)
         content = Content(
             id="test",
+            group="test",
             name="Test",
             quality=0,
             size=4,

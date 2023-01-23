@@ -3,37 +3,3 @@
   display: flex;
   justify-content: center;
 }
-
-.wy-nav-top {
-  background-color: #743 !important;
-}
-
-.tooltipster-base {
-  background-color: transparent !important;
-}
-
-.tooltipster-box {
-  background-color: #fae4c8 !important;
-  box-shadow: 0 0 10px 0 #602a21 !important;
-}
-
-.tooltipster-arrow {
-  display: none !important;
-}
-
-.tooltipster-arrow-border {
-  border-right-color: #e6d2b8 !important;
-}
-
-.modal__container {
-  background-color: #e6d2b8 !important;
-}
-
-.modal__close {
-  color: #602a21 !important;
-}
-
-.modal__btn {
-  background-color: #602a21 !important;
-  color: #fae4c8 !important;
-}

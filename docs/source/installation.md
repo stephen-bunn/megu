@@ -2,9 +2,6 @@
 
 # Installation
 
-**Welcome to Megu!**
-This page should hopefully provide you with enough information to get you started using Megu.
-
 Installing the package should be simple.
 
 ```console
