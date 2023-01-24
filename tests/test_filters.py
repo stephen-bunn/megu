@@ -35,6 +35,18 @@ def test_best_content_raises_StopIteration_for_no_content():
         next(best_content(iter([])))  # type: ignore
 
 
+@given(
+    content(name_strat="test_a"), content(name_strat="test_b"), sampled_from(["test_a", "test_b"])
+)
+def test_specific_content_filters_on_name(
+    content_a: Content, content_b: Content, content_name: str
+):
+    assert (
+        next(specific_content(iter([content_a, content_b]), name=content_name)).name  # type: ignore
+        == content_name
+    )
+
+
 @given(content(quality_strat=0), content(quality_strat=1), sampled_from([0, 1]))
 def test_specific_content_filters_on_quality(
     content_a: Content, content_b: Content, content_quality: float

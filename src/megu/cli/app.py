@@ -46,11 +46,17 @@ def get(
         "-d",
         help="The directory to save the content to.",
     ),
-    to_name: Optional[str] = Option(
+    to_output: Optional[str] = Option(
+        None,
+        "--output",
+        "-o",
+        help="The name format to save content with.",
+    ),
+    name: Optional[str] = Option(
         None,
         "--name",
         "-n",
-        help="The name format to save content with.",
+        help="The name of the content to get.",
     ),
     quality: Optional[float] = Option(
         None,
@@ -71,14 +77,16 @@ def get(
     url = normalize_url(from_url)
     plugin = get_plugin(url, plugin_dirpath=get_context_param(ctx, "plugin_dir", PLUGIN_DIRPATH))
 
-    content_filter = build_content_filter(quality=quality, type=type)
+    content_filter = build_content_filter(quality=quality, type=type, name=name)
     try:
         download_dirpath = (
             DOWNLOAD_DIRPATH if to_dir is None else Path(to_dir).expanduser().absolute()
         )
         for content in content_filter(iter_content(plugin, url)):
             to_path = download_dirpath.joinpath(
-                build_content_name(content, to_name) if to_name is not None else content.filename
+                build_content_name(content, to_output)
+                if to_output is not None
+                else content.filename
             )
             with Progress(
                 TextColumn(f"[info]{content.id}[/] [success]{content.name}[/]"),
