@@ -2,7 +2,7 @@
 
 from itertools import groupby
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from rich.columns import Columns
 from rich.filesize import decimal as format_filesize
@@ -39,7 +39,7 @@ def main(
 @app.command("get")
 def get(
     ctx: Context,
-    from_url: str = Argument(..., metavar="URL"),
+    from_url: List[str] = Argument(..., metavar="URL"),
     to_dir: Optional[str] = Option(
         None,
         "--dir",
@@ -74,55 +74,62 @@ def get(
     """Download content from a URL."""
 
     console = get_console(get_context_param(ctx, "color", True))
-    url = normalize_url(from_url)
-    plugin = get_plugin(url, plugin_dirpath=get_context_param(ctx, "plugin_dir", PLUGIN_DIRPATH))
-
-    content_filter = build_content_filter(quality=quality, type=type, name=name)
-    try:
-        download_dirpath = (
-            DOWNLOAD_DIRPATH if to_dir is None else Path(to_dir).expanduser().absolute()
+    for given_url in from_url:
+        url = normalize_url(given_url)
+        plugin = get_plugin(
+            url,
+            plugin_dirpath=get_context_param(ctx, "plugin_dir", PLUGIN_DIRPATH),
         )
-        for content in content_filter(iter_content(plugin, url)):
-            to_path = download_dirpath.joinpath(
-                build_content_name(content, to_output)
-                if to_output is not None
-                else content.filename
+
+        content_filter = build_content_filter(quality=quality, type=type, name=name)
+        try:
+            download_dirpath = (
+                DOWNLOAD_DIRPATH if to_dir is None else Path(to_dir).expanduser().absolute()
             )
-            with Progress(
-                TextColumn(f"[info]{content.id}[/] [success]{content.name}[/]"),
-                BarColumn(),
-                TaskProgressColumn(),
-                DownloadColumn(),
-                TimeRemainingColumn(),
-                console=console,
-            ) as progress:
+            for content in content_filter(iter_content(plugin, url)):
+                to_path = download_dirpath.joinpath(
+                    build_content_name(content, to_output)
+                    if to_output is not None
+                    else content.filename
+                )
+
                 if not to_path.parent.is_dir():
                     raise ValueError(f"{to_path.parent} does not exist")
 
                 if to_path.exists():
                     if len(content.checksums) <= 0:
-                        raise ValueError(f"{to_path} exists")
+                        console.print(f"[warning]{to_path.name} already exists, skipping {url}[/]")
+                        continue
 
                     first_checksum = content.checksums[0]
                     hash_type = HashType(first_checksum.type)
                     if hash_file(to_path, {hash_type})[hash_type] == first_checksum.value:
-                        raise ValueError(f"{to_path} exists")
+                        console.print(f"[warning]{to_path.name} already exists, skipping {url}[/]")
+                        continue
 
-                downloader = get_downloader(content)
-                download_task = progress.add_task("Downloading", total=content.size)
-                manifest = downloader.download_content(
-                    content,
-                    update_hook=lambda content_id, chunk_size, total_size: progress.advance(
-                        download_task, chunk_size
-                    ),
-                )
+                with Progress(
+                    TextColumn(f"[info]{content.id}[/] [success]{content.name}[/]"),
+                    BarColumn(),
+                    TaskProgressColumn(),
+                    DownloadColumn(),
+                    TimeRemainingColumn(),
+                    console=console,
+                ) as progress:
+                    downloader = get_downloader(content)
+                    download_task = progress.add_task("Downloading", total=content.size)
+                    manifest = downloader.download_content(
+                        content,
+                        update_hook=lambda content_id, chunk_size, total_size: progress.advance(
+                            download_task, chunk_size
+                        ),
+                    )
 
-                progress.stop()
-                with console.status(f"[debug]Writing {content.id} to {to_path}[/]"):
-                    write_content(plugin, manifest, to_path)
-    except Exception:
-        console.print_exception()
-        raise
+                    progress.stop()
+                    with console.status(f"[debug]Writing {content.id} to {to_path}[/]"):
+                        write_content(plugin, manifest, to_path)
+        except Exception:
+            console.print_exception()
+            raise
 
 
 @app.command("list")
